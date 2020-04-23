@@ -1,4 +1,4 @@
-yarn
+call yarn
 rd /s /q dist
 call npm run electron-build
 call npm run dist

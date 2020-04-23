@@ -19,7 +19,14 @@
     "directories": {
         "buildResources": "./build"
     },
-    "files": ["dist/gcp-editor-pro/**/*", "./main.js", "./package.json"] 
+    "files": ["dist/gcp-editor-pro/**/*", "./main.js", "./package.json"],
+    "win": {
+      "certificateFile": "d:\\comodo.pfx"
+    },
+    "nsis":{
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "main": "./main.js",
   "scripts": {

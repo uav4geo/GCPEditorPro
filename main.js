@@ -8,6 +8,7 @@ setupMainMenu = function(app){
         submenu: [
                 {
                     label: "&New GCP File",
+                    accelerator: 'CmdOrCtrl+N',
                     click: function(){
                         // if (dialog.showMessageBoxSync(mainWindow, { 
                         //     title: "Confirm",
@@ -21,7 +22,11 @@ setupMainMenu = function(app){
                     }
                 },
                 {
+                    type: "separator"
+                },
+                {
                     label: "&Quit",
+                    accelerator: 'CmdOrCtrl+Q',
                     click: function(){
                         app.exit(0);
                     }
@@ -47,6 +52,7 @@ setupMainMenu = function(app){
             submenu: [
                 {
                     label: "&About",
+                    accelerator: "F1",
                     click: function(){
                         const package = JSON.parse(require('fs').readFileSync(`${__dirname}/package.json`));
                         dialog.showMessageBoxSync(mainWindow, {

@@ -59,7 +59,7 @@ setupMainMenu = function(app){
                             title: "About",
                             type: "info",
                             buttons: ["OK"],
-                            message: `GCP Editor Pro - ${package.author.url}\n\nVersion ${package.version}`
+                            message: `GCP Editor Pro - ${package.author.url}\n\nVersion ${package.version}\n\nCredits: Luca Di Leo, Piero Toffanin`
                         })
                     }
                 }

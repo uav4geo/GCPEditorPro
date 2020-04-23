@@ -25,6 +25,8 @@ export class LoadConfigTxtComponent implements OnInit {
 
     public loadValue = 0;
 
+    private handleDrop = null;
+
     constructor(
         private papa: Papa,
         private utilsService: GcpsUtilsService,
@@ -41,6 +43,10 @@ export class LoadConfigTxtComponent implements OnInit {
             return;
         }
 
+        this.handleFiles(files);
+    }
+
+    public handleFiles(files){
         this.images = [];
 
         const matchedFiles = Object.assign([], files).filter(f => {
@@ -72,23 +78,49 @@ export class LoadConfigTxtComponent implements OnInit {
         }
     }
 
+    ngOnDestroy(): void {
+        if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
+    }
+
+    ngAfterViewInit(): void{
+        this.handleDrop = e => {
+            // Find first TXT
+            const files = [...e.detail.files];
+            for (let i = 0; i < files.length; i++){
+                if (files[i].name.toLowerCase().endsWith("txt")){
+                    this.handleTxt(files[i], (err: any) => {
+                        if (!err){
+                            // Parse rest
+                            this.handleFiles(files);
+                        }
+                    });
+                    break;
+                }
+            }
+        };  
+        window.addEventListener("droppedFiles", this.handleDrop);
+    }
+
     public isLoaded(name: string): boolean {
         return this.images !== null ? this.images.filter(item => item === name).length !== 0 : false;
     }
 
     public txtSelected(event) {
-
-        this.txtFileName = null;
-        this.descriptor = null;
-        this.errors = [];
-        this.isReady = false;
-        this.extras = [];
-
         const file = event.target.files[0];
 
         if (typeof file === 'undefined') {
             return;
         }
+
+        this.handleTxt(file);
+    }
+
+    public handleTxt(file, done = undefined){
+        this.txtFileName = null;
+        this.descriptor = null;
+        this.errors = [];
+        this.isReady = false;
+        this.extras = [];
 
         const reader = new FileReader();
         reader.readAsText(file, 'UTF-8');
@@ -134,7 +166,7 @@ export class LoadConfigTxtComponent implements OnInit {
 
                     this.txtParseResult = res;
                     this.isReady = true;
-
+                    if (done !== undefined) done();
                 }
             });
         };
@@ -142,6 +174,7 @@ export class LoadConfigTxtComponent implements OnInit {
             this.descriptor = null;
             this.txtFileName = null;
             this.errors = ['Unable to load file'];
+            if (done !== undefined) done(new Error(JSON.stringify(this.errors)));
         };
     }
 

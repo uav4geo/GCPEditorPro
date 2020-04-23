@@ -29,6 +29,8 @@ export class LoadConfigCsvComponent implements OnInit {
     public isReady = false;
     public csvParseResult: CsvParseResult = null;
 
+    private handleDrop = null;
+
     public csvSelected(event) {
 
         const file = event.target.files[0];
@@ -37,6 +39,10 @@ export class LoadConfigCsvComponent implements OnInit {
             return;
         }
 
+        this.handleCsvFile(file);
+    }
+
+    public handleCsvFile(file){
         this.csvFileName = null;
         this.descriptor = null;
         this.errors = null;
@@ -93,7 +99,6 @@ export class LoadConfigCsvComponent implements OnInit {
             this.csvFileName = null;
             this.errors = ['Unable to load file'];
         };
-
     }
 
     epsgProj4change(e): void {
@@ -113,6 +118,24 @@ export class LoadConfigCsvComponent implements OnInit {
         this.storageService.imageGcps = [];
 
         this.router.navigateByUrl('/gcps-map');
+    }
+
+    ngOnDestroy(): void {
+        if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
+    }
+
+    ngAfterViewInit(): void{
+        this.handleDrop = e => {
+            // Find first CSV
+            const files = [...e.detail.files];
+            for (let i = 0; i < files.length; i++){
+                if (files[i].name.toLowerCase().endsWith("csv")){
+                    this.handleCsvFile(files[i]);
+                    return;
+                }
+            }
+        };  
+        window.addEventListener("droppedFiles", this.handleDrop);
     }
 
     ngOnInit(): void {

@@ -40,3 +40,16 @@ nav.fixed-top{
 .alert a{
     text-decoration: underline;
 }
+
+html{
+    height: 100%;
+}
+
+body{
+    min-height: 100%;
+}
+
+html,body{
+    padding: 0;
+    margin: 0;
+}

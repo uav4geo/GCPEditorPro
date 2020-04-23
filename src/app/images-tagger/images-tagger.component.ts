@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
@@ -21,9 +21,12 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public images: ImageDescriptor[] = null;
 
+    @ViewChild('dnd') dnd: ElementRef;
+    private handleDrop = null;
+
     @ViewChild('imagesUpload') imagesUpload: ElementRef;
 
-    constructor(private router: Router, private route: ActivatedRoute, private storage: StorageService, private sanitizer: DomSanitizer) {
+    constructor(private router: Router, private route: ActivatedRoute, private storage: StorageService, private sanitizer: DomSanitizer, private appRef: ApplicationRef) {
 
         if (typeof storage.gcps === 'undefined' ||
             storage.gcps === null ||
@@ -37,11 +40,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
+    }
 
+    ngAfterViewInit(): void{
+        this.handleDrop = e => {
+            this.handleImages(e.detail.files);
+        };  
+        window.addEventListener("droppedFiles", this.handleDrop);
     }
 
     ngOnInit(): void {
-
         const gcpName = this.route.snapshot.paramMap.get('gcp');
 
         if (typeof gcpName === 'undefined' || gcpName === null) {
@@ -70,14 +79,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             }));
     }
 
-    public imagesSelected(event) {
-
-        const files: File[] = event.target.files;
-
-        if (typeof files === 'undefined') {
-            return;
-        }
-
+    public handleImages(files){
         for (const file of files) { // for multiple files
             (f => {
                 const name = f.name;
@@ -121,6 +123,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         // this.imagesUpload.nativeElement.value = null;
     }
 
+    public imagesSelected(event) {
+
+        const files: File[] = event.target.files;
+
+        if (typeof files === 'undefined') {
+            return;
+        }
+
+        return this.handleImages(files);
+    }
+
     public ok(): void {
 
         // Save in storage
@@ -152,7 +165,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         // Notify smart images that pins might have to be refreshed
         window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
     }
-
 }
 
 class ImageDescriptor {

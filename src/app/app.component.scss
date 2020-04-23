@@ -8,6 +8,13 @@
         opacity: 1;
     }
 }
+.root{
+    background-color: #fff;
+    transition: background-color 0.3s ease-in-out;
+    &.highlight{
+        background-color: #f7f7f7;
+    }
+}
 .breadcrumb{
     max-height: 48px;
     overflow: hidden;

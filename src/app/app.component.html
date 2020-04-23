@@ -1,0 +1,14 @@
+<nav aria-label="breadcrumb" class="fixed-top">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><img style="position: relative; top: -1px;" src="assets/favicons/favicon-16x16.png" alt="GCPIT"></li>
+        <li class="breadcrumb-item" [ngClass]="{'active': isActive('load-config')}">Setup</li>
+        <li class="breadcrumb-item" [ngClass]="{'active': isActive('gcps-map')}">Map View</li>
+        <li class="breadcrumb-item" [ngClass]="{'active': isActive('images-tagger')}">Tag Images</li>
+        <li class="breadcrumb-item" [ngClass]="{'active': isActive('export-config')}">Preview</li>
+    </ol>
+
+    <!--<button (click)="startOver()" class="btn btn-sm redo"><fa-icon icon="redo"></fa-icon></button>-->
+</nav>
+<div class="container-fluid" style="margin-top: 4rem; margin-bottom: 5rem">
+    <router-outlet></router-outlet>
+</div>

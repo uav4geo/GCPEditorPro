@@ -1,0 +1,38 @@
+.smart-image{
+    position: relative;
+    overflow: hidden;
+    max-height: 60vh;
+}
+
+.gm-style-pbc {
+    transition: opacity ease-in-out;
+    background-color: rgba(0,0,0,0.45);
+    text-align: center;
+}
+
+.msg {
+    z-index: 2;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    border-width: 0px;
+    margin: 0px;
+    left: 0px;
+    top: 0px;
+    opacity: 0;
+    transition-duration: 0.3s;
+    pointer-events: none;
+}
+
+.gm-style-pbt {
+    font-size: 22px;
+    color: white;
+    font-family: Roboto,Arial,sans-serif;
+    position: relative;
+    margin: 0;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}

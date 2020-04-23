@@ -1,0 +1,30 @@
+<div class="row">
+	<div class="col">
+		<!--<div class="alert alert-info">
+			<fa-icon icon="info-circle" class="mr-2"></fa-icon>If you are starting new, load the CSV that contains the
+			list of GCPs. <br />If you are picking up a previous work, load the gcp_list.txt that
+			contains the location of GPGs in the images
+		</div>-->
+		<nav ngbNav #nav="ngbNav" class="nav-pills">
+            <ng-container ngbNavItem>
+                <a ngbNavLink>Create GCP File From CSV</a>
+                <ng-template ngbNavContent>
+                    <app-load-config-csv></app-load-config-csv>
+                </ng-template>
+            </ng-container>
+            <ng-container ngbNavItem>
+				<a ngbNavLink>Create GCP File From Map</a>
+				<ng-template ngbNavContent>
+					<app-load-config-empty></app-load-config-empty>
+				</ng-template>
+			</ng-container>
+			<ng-container ngbNavItem>
+				<a ngbNavLink>Resume Work on GCP File</a>
+				<ng-template ngbNavContent>
+					<app-load-config-txt></app-load-config-txt>
+				</ng-template>
+			</ng-container>
+		</nav>
+		<div [ngbNavOutlet]="nav" class="mt-2"></div>
+	</div>
+</div>

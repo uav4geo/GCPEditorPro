@@ -1,0 +1,119 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-8 col-lg-12 pl-0">
+            <div class="form-row my-2">
+                <div class="col col-md-8">
+                    <div class="custom-file ">
+                        <input type="file" class="custom-file-input" (change)="csvSelected($event)" accept=".csv" multiple="false"
+                            id="csvFile">
+                        <label class="custom-file-label mb-0" for="csvFile">
+                            <span *ngIf="csvFileName == null">Choose a .CSV file with GCP coordinates</span>
+                            <span *ngIf="csvFileName != null">{{csvFileName}}</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="col col-md-4">
+                    <div class="input-group" placement="bottom" ngbTooltip='Specify the coordinate reference system of your CSV using an EPSG code or a PROJ string.'>
+                        <input type="text" [(ngModel)]="epsgProj4" class="form-control"
+                            (input)="epsgProj4change($event.target.value)" (keyup.enter)="next()" id="inlineFormInputGroup"
+                            placeholder="EPSG:4326">
+                        <div class="input-group-append" data-toggle="tooltip">
+                            <div class="input-group-text">
+                                <fa-icon icon="map-marked-alt" class="mr-2"></fa-icon><a href="https://epsg.io" target="_blank">EPSG</a> / <a target="_blank" href="https://proj.org">PROJ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-danger mt-3" *ngIf="errors != null && errors.length > 0">
+                <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>Cannot load file, please fix the
+                following errors:<br />
+                <ul class="mt-2">
+                    <li *ngFor="let error of errors">
+                        {{error}}
+                    </li>
+                </ul>
+            </div>
+            <table class="table table-striped table-sm mt-3" *ngIf="descriptor != null">
+                <thead>
+                    <tr>
+                        <th scope="col" *ngFor="let header of csvHeader">{{header}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let gcp of descriptor.gcps">
+                        <td>
+                            {{ gcp.name }}
+                        </td>
+                        <td>
+                            {{ gcp.northing }}
+                        </td>
+                        <td>
+                            {{ gcp.easting }}
+                        </td>
+                        <td>
+                            {{ gcp.elevation }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-xl-4 col-lg-12 pr-0 pl-0">
+            <div class="card">
+                <div class="card-header" (click)="toggleCsvTemplates()">
+                    <fa-icon icon="download" class="mr-2"></fa-icon>Download CSV examples
+                </div>
+                <div class="card-body" *ngIf="!hideCsvTemplates">
+                    <ul class="m-0">
+                        <li>
+                            <a href="./assets/example-files/GCPs-CSV/gcps-nor-eas-ft.csv">Northing, Easting, Elevation
+                                (ft)</a>
+                        </li>
+                        <li>
+                            <a href="./assets/example-files/GCPs-CSV/gcps-nor-eas-m.csv">Northing, Easting, Elevation
+                                (m)</a>
+                        </li>
+                        <li>
+                            <a href="./assets/example-files/GCPs-CSV/gcps-lat-lng.csv">Latitude, Longitude, Elevation
+                                (m)</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <div class="card-header" (click)="toggleCsvInstructions()">
+                    <fa-icon icon="info-circle" class="mr-2"></fa-icon>CSV format specification
+                </div>
+                <div class="card-body" *ngIf="!hideCsvInstructions">
+                    <ol>
+                        <li>Your .CSV must contain 4 columns</li>
+                        <li>
+                            The first row (header) must be: GCP Label,X,Y,Z
+                        </li>
+                        <li>
+                            Each subsequent row contains the label and coordinates of your
+                            ground control points (in the
+                            selected coordinate system units specified by the EPSG code)
+                        </li>
+                        <li>
+                            No cells can be left blank
+                        </li>
+                        <li>
+                            GCP Labels must be unique
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--<div class="alert alert-info my-3">
+    <fa-icon icon="info-circle" class="mr-2"></fa-icon>After loading the .CSV file, please specify the coordinate reference system using an <a
+        target="_blank" href="http://epsg.io/">EPSG</a> code or a <a href="https://proj.org/" target="_blank">PROJ</a> string.
+</div>-->
+
+<div class="fixed-bottom bg-white d-flex align-items-center justify-content-end">
+    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">Go to next step<fa-icon
+            icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
+</div>

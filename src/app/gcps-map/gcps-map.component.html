@@ -1,0 +1,33 @@
+<div class="row">
+    <div class="col-xl-3 col-lg-6 col-6" style="min-height: 76vh">
+        <div class="card">
+            <div class="card-header">
+                <strong>Ground Control Points</strong>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" *ngFor="let gcpMark of gcps" (click)="select(gcpMark)" (dblclick)="editImages(gcpMark.gcp)"
+                    [ngClass]="{ 'bg-dark': this.selectedGCP != null && this.selectedGCP.gcp.name === gcpMark.gcp.name, 'text-white': this.selectedGCP != null && this.selectedGCP.gcp.name === gcpMark.gcp.name }">
+                    {{gcpMark.gcp.name}}<span title="3 or more images = good" class="badge ml-2"
+                        [ngClass]="{ 'badge-warning': gcpMark.images.length > 0 && gcpMark.images.length < 3, 'badge-success': gcpMark.images.length >= 3, 'badge-light': gcpMark.images.length == 0 }">{{gcpMark.images.length}}
+                        {{gcpMark.images.length === 1 ? 'image' : 'images'}}</span><button class="btn btn-sm btn-light mr-2 float-right" (click)="editImages(gcpMark.gcp)">
+                            <fa-icon icon="images" class="mr-2"></fa-icon>Tag
+                        </button>
+                </li>
+            </ul>
+        </div>
+        <div class="mt-2" *ngIf="gcps.length === 0"><fa-icon icon="info-circle" class="mr-2"></fa-icon>Click the marker button from the top left side of the map to add a GCP.</div>
+    </div>
+    <div class="col-xl-9 col-lg-6 col-6" style="min-height: 76vh">
+        <div class="h-100" leaflet (leafletMapReady)="onMapReady($event)" [leafletOptions]="options">
+        </div>
+    </div>
+</div>
+
+<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">
+    <button class="btn btn-primary ml-3 my-3" (click)="back()">
+        <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Back
+    </button>
+    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">Go to next step<fa-icon
+            icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
+
+</div>

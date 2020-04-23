@@ -1,0 +1,30 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col pl-0">
+            <div class="form-row mt-2 mb-0">
+                <div class="col col-xl-4 col-lg-6 col-xs-12">
+                    <div class="input-group" placement="bottom" ngbTooltip='EPSG code or a PROJ string'>
+                        <input type="text" [(ngModel)]="epsgProj4" class="form-control"
+                        (input)="epsgProj4change($event.target.value)" (keyup.enter)="next()" id="inlineFormInputGroup"
+                        placeholder="EPSG:4326">
+                        <div class="input-group-append" data-toggle="tooltip">
+                            <div class="input-group-text">
+                                <fa-icon icon="map-marked-alt" class="mr-2"></fa-icon><a href="https://epsg.io" target="_blank">EPSG</a> / <a target="_blank" href="https://proj.org">PROJ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row mt-0">
+                <div class="col col-md-12">
+                    <div class="mt-2">Choose a coordinate reference system, or leave the default for WGS84 Latitude/Longitude.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed-bottom bg-white d-flex align-items-center justify-content-end">
+    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">Go to next step<fa-icon
+            icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
+</div>

@@ -1,0 +1,18 @@
+@import url('./Leaflet.Autolayers/css/leaflet.auto-layers.css');
+@import url( './Leaflet.SimpleMarkers/Control.SimpleMarkers.css');
+@import url( './Leaflet.Geocoder/Control.Geocoder.css');
+
+.leaflet-popup-content a.btn-danger{
+    position: absolute;
+    right: 20px;
+    bottom: 14px;
+}
+
+.list-group-item {
+    cursor: pointer;
+    user-select: none;
+}
+
+.leaflet-popup{
+    min-width: 250px;
+}

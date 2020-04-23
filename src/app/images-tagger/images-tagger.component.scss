@@ -1,0 +1,15 @@
+.badge {
+    .success, .info {
+        cursor: pointer;
+    }
+    position: relative;
+    .close{
+        position: absolute;
+        right: 10px;
+        top: 6px;
+    }
+    h5{
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}

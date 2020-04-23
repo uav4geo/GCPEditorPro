@@ -7,8 +7,8 @@
     "url": "https://uav4geo.com"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/uav4geo/GCPEditorPro.git"
+    "type": "git",
+    "url": "https://github.com/uav4geo/GCPEditorPro.git"
   },
   "description": "Amazingly fast and simple ground control points interface.",
   "build": {
@@ -17,13 +17,27 @@
     "productName": "GCP Editor Pro",
     "copyright": "Copyright © 2020 UAV4GEO",
     "directories": {
-        "buildResources": "./build"
+      "buildResources": "./build"
     },
-    "files": ["dist/gcp-editor-pro/**/*", "./main.js", "./package.json"],
+    "files": [
+      "dist/gcp-editor-pro/**/*",
+      "./main.js",
+      "./package.json"
+    ],
+    "afterSign": "scripts/notarize.js",
     "win": {
       "certificateFile": "d:\\comodo.pfx"
     },
-    "nsis":{
+    "mac": {
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "sign": false
+    },
+    "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
@@ -90,8 +104,9 @@
     "@types/jasminewd2": "~2.0.3",
     "@types/node": "^12.12.35",
     "codelyzer": "^5.1.2",
-    "electron-builder": "^22.5.1",
     "electron": "^8.2.3",
+    "electron-builder": "^22.5.1",
+    "electron-notarize": "^0.3.0",
     "jasmine-core": "~3.5.0",
     "jasmine-spec-reporter": "~4.2.1",
     "karma": "~4.4.1",

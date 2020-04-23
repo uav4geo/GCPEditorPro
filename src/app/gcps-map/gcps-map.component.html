@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-xl-3 col-lg-6 col-6" style="min-height: 76vh">
+    <div class="col-xl-3 col-lg-4 col-6" style="min-height: 76vh">
         <div class="card">
             <div class="card-header">
                 <strong>Ground Control Points</strong>
@@ -17,7 +17,7 @@
         </div>
         <div class="mt-2" *ngIf="gcps.length === 0"><fa-icon icon="info-circle" class="mr-2"></fa-icon>Click the marker button from the top left side of the map to add a GCP.</div>
     </div>
-    <div class="col-xl-9 col-lg-6 col-6" style="min-height: 76vh">
+    <div class="col-xl-9 col-lg-8 col-6" style="min-height: 76vh">
         <div class="h-100" leaflet (leafletMapReady)="onMapReady($event)" [leafletOptions]="options">
         </div>
     </div>

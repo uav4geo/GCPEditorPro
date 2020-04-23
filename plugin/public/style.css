@@ -9,6 +9,9 @@
     font-style: normal;
 }
 .gcp-editor-pro-icon:before{
+   position: relative;
+   top: 1px;
+
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'gcpeditorpro' !important;
   speak: none;

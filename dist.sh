@@ -1,5 +1,6 @@
 #!/bin/bash
 
+yarn
 rm -fr dist
 npm run electron-build
 npm run dist

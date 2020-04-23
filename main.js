@@ -28,20 +28,20 @@ setupMainMenu = function(app){
                 }
             ] 
         },
-        {
-            label: "Debug",
-            submenu: [
-                {
-                    role: 'toggledevtools'
-                },
-                {
-                    role: 'reload'
-                },
-                {
-                    role: 'forceReload'
-                }
-            ]
-        },
+        // {
+        //     label: "Debug",
+        //     submenu: [
+        //         {
+        //             role: 'toggledevtools'
+        //         },
+        //         {
+        //             role: 'reload'
+        //         },
+        //         {
+        //             role: 'forceReload'
+        //         }
+        //     ]
+        // },
         {
             label: "&Help",
             submenu: [

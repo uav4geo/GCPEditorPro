@@ -15,6 +15,16 @@
         background-color: #f7f7f7;
     }
 }
+.modal-footer{
+    width: 100%;
+    text-align: right;
+    & > *{
+        width: 100%;
+    }
+    .btn{
+        margin-left: 12px;
+    }
+}
 .breadcrumb{
     max-height: 48px;
     overflow: hidden;

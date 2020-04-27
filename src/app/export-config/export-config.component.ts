@@ -17,7 +17,7 @@ export class ExportConfigComponent implements OnInit {
     public projection: Projection;
     public extras: string[];
 
-    constructor(private router: Router, private storage: StorageService, private utils: GcpsUtilsService) {
+    constructor(private router: Router, public storage: StorageService, private utils: GcpsUtilsService) {
 
         if (typeof storage.imageGcps === 'undefined' ||
             storage.imageGcps === null ||
@@ -38,6 +38,10 @@ export class ExportConfigComponent implements OnInit {
     ngOnInit(): void {
     }
 
+    activate(): void{
+        window.dispatchEvent(new CustomEvent('enterLicense'));
+    }
+
     private getTxtContent(): string {
 
         let content = this.projection.str + '\n';
@@ -50,6 +54,10 @@ export class ExportConfigComponent implements OnInit {
     }
 
     public exportTxt() {
+        if (this.storage.getLicense().demo){
+            window.dispatchEvent(new CustomEvent('enterLicense'));
+            return;
+        }
 
         const content = this.getTxtContent();
 

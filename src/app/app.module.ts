@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { LoadConfigCsvComponent } from './load-config-csv/load-config-csv.component';
 import { LoadConfigTxtComponent } from './load-config-txt/load-config-txt.component';
 import { LoadConfigEmptyComponent } from './load-config-empty/load-config-empty.component';
+import { LicenseInfoComponent } from './license-info/license-info.component';
 import { GcpsMapComponent } from './gcps-map/gcps-map.component';
 import { ImagesTaggerComponent } from './images-tagger/images-tagger.component';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
@@ -30,7 +31,8 @@ import { SmartimageComponent } from './smartimage/smartimage.component';
         LoadConfigEmptyComponent,
         GcpsMapComponent,
         ImagesTaggerComponent,
-        SmartimageComponent
+        SmartimageComponent,
+        LicenseInfoComponent
     ],
     imports: [
         BrowserModule,

@@ -9,6 +9,34 @@
 
     <button (click)="startOver()" class="btn btn-sm redo"><fa-icon icon="redo"></fa-icon></button>
 </nav>-->
+<ng-template #licenseModal let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">
+        <span *ngIf="!showEnterLicense">Welcome!</span>
+        <span *ngIf="showEnterLicense">Enter License</span>
+      </h4>
+    </div>
+    <div class="modal-body">
+        <div *ngIf="!showEnterLicense">
+            You can try the software in demo mode. While in demo mode you will not be able to export/save results. If you have <a target="_blank" href="https://uav4geo.com/software/gcpeditorpro">purchased a license</a> from uav4geo.com you can activate the software instead.
+        </div>
+        <div *ngIf="showEnterLicense">
+            <textarea class="form-control"
+                    [ngClass]="{'success': validLicense, 'failure': validLicense === false}" 
+                    rows='12' [(ngModel)]="license" (input)="licenseChange($event.target.value)"></textarea>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div *ngIf="!showEnterLicense">
+            <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Continue in Demo Mode</button>
+            <button type="button" class="btn btn-outline-dark" (click)="enterLicense()"><fa-icon icon="unlock" class="mr-2"></fa-icon>Activate</button>
+        </div>
+        <div *ngIf="showEnterLicense">
+            <button type="button" style="float: left;" class="btn btn-outline-dark" (click)="hideLicense(modal)"><fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Go Back</button>
+            <button type="button" class="btn btn-outline-dark" (click)="activate(modal)" [disabled]="!validLicense"><fa-icon icon="unlock" class="mr-2"></fa-icon>Activate</button>
+        </div>
+    </div>
+</ng-template>
 <div #root class="root container-fluid" style="padding-top: 1rem; padding-bottom: 5rem; min-height: 100vh">
     <router-outlet></router-outlet>
 </div>

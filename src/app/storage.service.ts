@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { GCPsDescriptor, TxtDescriptor, GCP, ImageGcp, Projection, ElevationMeasureUnit } from './gcps-utils.service';
 import { base64ArrayBuffer } from 'src/shared/utils';
+import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
 
 @Injectable({
     providedIn: 'root'
@@ -11,6 +12,7 @@ export class StorageService {
     public imageGcps: ImageGcp[] = [];
     public projection: Projection;
     public images: ImageInfo[] = [];
+    public license: LicenseInfo;
 
     public saveImage(image: ImageInfo): ImageInfo {
         const match = this.images.filter(item => item.name === image.name);
@@ -34,6 +36,30 @@ export class StorageService {
             return null;
         } else {
             return match[0].url;
+        }
+    }
+
+    public hasLicense(): boolean{
+        return !!localStorage.getItem("license") && !this.getLicense().demo;
+    }
+
+    public getLicense(): LicenseInfo{
+        if (!this.license){
+            const licstr = localStorage.getItem("license") || "";
+            this.license = validate('gcpeditorpro', licstr);
+        }
+
+        if (!this.license){
+            this.license = new DemoLicense();
+        }
+
+        return this.license;
+    }
+
+    public saveLicense(license: string){
+        if (!validate('gcpeditorpro', license).demo){
+            this.license = null;
+            localStorage.setItem("license", license);
         }
     }
 

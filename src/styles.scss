@@ -49,6 +49,21 @@ body{
     min-height: 100%;
 }
 
+.modal-content{
+    a{
+        text-decoration: underline;
+    }
+    *:focus{
+        outline: 0;
+    }
+    textarea.success{
+        background-color: #e6ffeb;
+    }
+    textarea.failure{
+        background-color: #ffe6e6;
+    }
+}
+
 html,body{
     padding: 0;
     margin: 0;

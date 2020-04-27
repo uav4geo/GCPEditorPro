@@ -1,0 +1,8 @@
+<div class="license-info" *ngIf="!storageService.getLicense().dev">
+    <div *ngIf="storageService.getLicense().demo">
+        Demo mode. <a href="javascript:void(0)" (click)="enterLicense()">Activate</a> to unlock exports.
+    </div>
+    <div *ngIf="!storageService.getLicense().demo">
+        Licensed to: {{storageService.getLicense().name}}
+    </div>
+</div>

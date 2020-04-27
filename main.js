@@ -28,7 +28,7 @@ setupMainMenu = function(app){
                     label: "&Quit",
                     accelerator: 'CmdOrCtrl+Q',
                     click: function(){
-                        app.exit(0);
+                        app.quit(0);
                     }
                 }
             ] 

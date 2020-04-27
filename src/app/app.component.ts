@@ -1,5 +1,8 @@
 import { Component, isDevMode, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { Router, RouterEvent } from '@angular/router';
+import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
+import { validate, DevLicense } from './licenser';
+import { StorageService } from './storage.service';
 
 
 @Component({
@@ -9,8 +12,15 @@ import { Router, RouterEvent } from '@angular/router';
 })
 export class AppComponent implements AfterViewInit {
     @ViewChild('root') root: ElementRef;
+    @ViewChild('licenseModal') licenseModal: NgbModalRef;
 
-    constructor(private router: Router) {
+    private closeResult = '';
+    public license = '';
+    public showEnterLicense = false;
+    public validLicense = null;
+    public closeModalOnHideLicense = false;
+
+    constructor(private router: Router, private modalService: NgbModal, private storageService: StorageService) {
         if (isDevMode()) {
             router.events.pipe().subscribe(e => {
                 console.log(e);
@@ -46,6 +56,21 @@ export class AppComponent implements AfterViewInit {
             window.dispatchEvent(new CustomEvent('droppedFiles', {detail: {files: e.dataTransfer.files}}));
         };
         dropArea.addEventListener('drop', handleDrop, false);
+
+        if (isDevMode()){
+            this.storageService.license = new DevLicense();
+        }else{
+            if (!this.storageService.hasLicense()){
+                this.closeModalOnHideLicense = false;
+                this.open(this.licenseModal);
+            }
+        }
+
+        window.addEventListener('enterLicense', () => {
+            this.showEnterLicense = true;
+            this.closeModalOnHideLicense = true;
+            this.open(this.licenseModal);
+        });
     }
 
     isActive(route: string): boolean {
@@ -56,5 +81,39 @@ export class AppComponent implements AfterViewInit {
         if (window.confirm("Are you sure you want to start over? Unsaved progress will be lost.")){
             window.location.reload(true);
         }
+    }
+
+    enterLicense(): void{
+        this.showEnterLicense = true;
+    }
+
+    hideLicense(modal): void{
+        if (this.closeModalOnHideLicense){
+            modal.close();
+        }else{
+            this.showEnterLicense = false;
+            this.license = '';
+        }
+    }
+
+    licenseChange(license): void{
+        if (license.length > 0){
+            this.validLicense = !validate('gcpeditorpro', license).demo;
+        }else{
+            this.validLicense = null;
+        }
+    }
+
+    activate(modal): void{
+        this.storageService.saveLicense(this.license);
+        modal.close();
+    }
+
+    open(content) {
+        this.modalService.open(content, {ariaLabelledBy: 'modal-basic-title'}).result.then((result) => {
+            // Nothing
+        }, (reason) => {
+            this.open(this.licenseModal);
+        });
     }
 }

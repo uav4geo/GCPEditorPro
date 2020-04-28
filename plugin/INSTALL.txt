@@ -1,0 +1,11 @@
+GCP Editor Pro WebODM Plugin
+============================
+
+To install the plugin:
+
+1) Open WebODM
+2) Navigate to Administration -- Plugins
+3) Press the "Load Plugin (.zip)" button
+4) Select "GCPEditorPro-WebODM-Plugin.zip"
+
+Enjoy!

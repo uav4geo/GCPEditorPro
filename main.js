@@ -48,6 +48,34 @@ setupMainMenu = function(app){
         //     ]
         // },
         {
+            label: "&Edit",
+            submenu: [
+                {
+                    role: "copy"
+                },
+                {
+                    role: "cut"
+                },
+                {
+                    role: "paste"
+                }
+            ]
+        },
+        {
+            label: "&View",
+            submenu: [
+                {
+                    role: "zoomIn",
+                },
+                {
+                    role: "zoomOut"
+                },
+                {
+                    role: "togglefullscreen"
+                }
+            ]
+        },
+        {
             label: "&Help",
             submenu: [
                 {

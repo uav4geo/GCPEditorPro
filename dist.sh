@@ -18,4 +18,6 @@ if [ -e ./GCPEditorPro.AppImage ]; then
     cd plugin-staging
     zip -r ../GCPEditorPro-WebODM-Plugin.zip gcp-editor-pro
 fi
-
+if [ -e ./GCPEditorPro.dmg ]; then
+    mv ./GCPEditorPro.dmg ./GCPEditorPro-MacOS.dmg
+fi

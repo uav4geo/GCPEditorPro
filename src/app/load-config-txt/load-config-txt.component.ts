@@ -30,7 +30,7 @@ export class LoadConfigTxtComponent implements OnInit {
     constructor(
         private papa: Papa,
         private utilsService: GcpsUtilsService,
-        private storageService: StorageService,
+        public storageService: StorageService,
         private router: Router) {
     }
 
@@ -218,5 +218,8 @@ export class LoadConfigTxtComponent implements OnInit {
         this.hideTxtSpecs = !this.hideTxtSpecs;
     }
 
+    activate(): void{
+        window.dispatchEvent(new CustomEvent('enterLicense'));
+    }
 }
 

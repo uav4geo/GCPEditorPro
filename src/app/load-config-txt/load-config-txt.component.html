@@ -117,11 +117,17 @@
             <td>
                 {{ imgGcp.geoZ }}
             </td>
-            <td>
+            <td *ngIf="!storageService.getLicense().demo">
                 {{ imgGcp.imX }}
             </td>
-            <td>
+            <td *ngIf="!storageService.getLicense().demo">
                 {{ imgGcp.imY }}
+            </td>
+            <td *ngIf="storageService.getLicense().demo">
+                <a title="Image coordinates are hidden in demo mode." href="javascript:void(0)" (click)="activate()">****</a>
+            </td>
+            <td *ngIf="storageService.getLicense().demo">
+                <a title="Image coordinates are hidden in demo mode." href="javascript:void(0)" (click)="activate()">****</a>
             </td>
             <td>
                 {{ imgGcp.imgName }}

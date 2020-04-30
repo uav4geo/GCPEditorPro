@@ -24,6 +24,9 @@
             <textarea class="form-control"
                     [ngClass]="{'success': validLicense, 'failure': validLicense === false}" 
                     rows='12' [(ngModel)]="license" (input)="licenseChange($event.target.value)"></textarea>
+            <div *ngIf="licenseHint" class="mt-3 alert alert-warning">
+                {{licenseHint}}
+            </div>   
         </div>
     </div>
     <div class="modal-footer">

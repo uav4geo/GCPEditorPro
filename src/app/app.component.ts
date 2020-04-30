@@ -16,6 +16,7 @@ export class AppComponent implements AfterViewInit {
 
     private closeResult = '';
     public license = '';
+    public licenseHint = '';
     public showEnterLicense = false;
     public validLicense = null;
     public closeModalOnHideLicense = false;
@@ -97,8 +98,12 @@ export class AppComponent implements AfterViewInit {
     }
 
     licenseChange(license): void{
+        this.licenseHint = "";
+
         if (license.length > 0){
-            this.validLicense = !validate('gcpeditorpro', license).demo;
+            this.validLicense = !validate('gcpeditorpro', license, (hint) => {
+                this.licenseHint = hint;
+            }).demo;
         }else{
             this.validLicense = null;
         }

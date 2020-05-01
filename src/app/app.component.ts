@@ -72,6 +72,14 @@ export class AppComponent implements AfterViewInit {
             this.closeModalOnHideLicense = true;
             this.open(this.licenseModal);
         });
+
+        // iFrame window height broadcast
+        if ( window.location !== window.parent.location ) {
+            // The page is in an iframe, broadcast height
+            setInterval(function() {
+                window.parent.postMessage(document.body.scrollHeight, "*");
+            }, 200); 
+        }
     }
 
     isActive(route: string): boolean {

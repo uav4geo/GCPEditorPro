@@ -18,7 +18,9 @@ Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](htt
 
 ## Installation
 
-The easiest, most convenient way to run the software is to [download the prebuilt releases](https://uav4geo.com/software/gcpeditorpro) and [purchase a license](https://uav4geo.com/software/gcpeditorpro#buy). You can support the development of the software that way ❤
+The easiest, most convenient way to run the software is to [download the prebuilt releases](https://uav4geo.com/software/gcpeditorpro), which can be downloaded freely for evaluation. 
+
+You will need to [purchase a license](https://uav4geo.com/software/gcpeditorpro#buy) to unlock the prebuild releases after evaluation. Your purchase helps support the development of the software ❤
 
 If you don't want to pay for a license, you can compile the software from sources (see instructions below). If you choose to compile from sources, you are free to use, copy, distribute and modify the software, provided that you are the **only** user of the software. See the terms of the [Fair Source License](https://github.com/uav4geo/GCPEditorPro/blob/master/LICENSE) for details.
 

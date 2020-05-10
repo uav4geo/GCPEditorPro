@@ -97,8 +97,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     const descr: ImageDescriptor = {
                         image: {
                             gcpName: this.gcp.name,
-                            geoX: this.gcp.northing,
-                            geoY: this.gcp.easting,
+                            geoX: this.gcp.easting,
+                            geoY: this.gcp.northing,
                             geoZ: this.gcp.elevation,
                             imX: 0,
                             imY: 0,
@@ -153,7 +153,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     public pin(location: PinLocation, desc: ImageDescriptor): void {
-        console.log(location);
         desc.isTagged = true;
         desc.image.imX = location.x;
         desc.image.imY = location.y;

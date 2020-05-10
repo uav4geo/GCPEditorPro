@@ -40,6 +40,9 @@ export class LoadConfigCsvComponent implements OnInit {
         }
 
         this.handleCsvFile(file);
+
+        // Clear to allow selection of same file
+        event.target.value = null;
     }
 
     public handleCsvFile(file){

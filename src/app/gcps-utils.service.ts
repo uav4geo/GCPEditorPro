@@ -173,8 +173,8 @@ export class GcpsUtilsService {
                 // If no GCP name was specifies we need to look for a matching one (same coords) or generate a new one
                 if (imgGcp.gcpName == null) {
 
-                    const matchingGcps = gcps.filter(gcp => gcp.northing === imgGcp.geoX &&
-                        gcp.easting === imgGcp.geoY &&
+                    const matchingGcps = gcps.filter(gcp => gcp.easting === imgGcp.geoX &&
+                        gcp.northing === imgGcp.geoY &&
                         gcp.elevation === imgGcp.geoZ);
 
                     if (matchingGcps.length === 0) {
@@ -183,8 +183,8 @@ export class GcpsUtilsService {
                         imgGcp.gcpName = 'gcp' + (gcps.length + 1).toString().padStart(2, '0');
 
                         gcps.push({
-                            northing: imgGcp.geoX,
-                            easting: imgGcp.geoY,
+                            northing: imgGcp.geoY,
+                            easting: imgGcp.geoX,
                             elevation: imgGcp.geoZ,
                             name: imgGcp.gcpName
                         });
@@ -200,8 +200,8 @@ export class GcpsUtilsService {
                     // Let's look for our GCP, if we don't find it we'll add it
                     if (gcps.filter(item => item.name === imgGcp.gcpName).length === 0) {
                         gcps.push({
-                            northing: imgGcp.geoX,
-                            easting: imgGcp.geoY,
+                            northing: imgGcp.geoY,
+                            easting: imgGcp.geoX,
                             elevation: imgGcp.geoZ,
                             name: imgGcp.gcpName
                         });
@@ -293,13 +293,13 @@ export class GcpsUtilsService {
                 result.errors.push('In row ' + n + ' cannot read value "' + row[1] + '" (not a number?)');
             }
 
-            if (isNaN(northing)) {
-                result.errors.push('In row ' + n + ' cannot read value "' + row[1] + '" (not a number?)');
+            if (isNaN(easting)) {
+                result.errors.push('In row ' + n + ' cannot read value "' + row[2] + '" (not a number?)');
             }
 
-            if (isNaN(northing)) {
-                result.errors.push('In row ' + n + ' cannot read value "' + row[1] + '" (not a number?)');
-            }
+            // if (isNaN(elevation)) {
+            //     result.errors.push('In row ' + n + ' cannot read value "' + row[3] + '" (not a number?)');
+            // }
 
             if (result.errors.length === 0) {
                 gcps.push({

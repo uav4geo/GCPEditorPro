@@ -52,7 +52,7 @@ export class GcpsMapComponent implements OnInit {
             const coords = proj4.default.transform(
                 prj,
                 proj4.default.WGS84,
-                [item.northing, item.easting, item.elevation]);
+                [item.easting, item.northing, item.elevation]);
             const elevation = isNaN(item.elevation) ? "None" : item.elevation;
 
             const markerLayer = marker(new L.LatLng(coords.y, coords.x, coords.z), {
@@ -208,7 +208,7 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
             add_marker_callback: latlng => {
                 // Get marker location and convert to user proj
                 const {lat, lng} = latlng;
-                const [y, x] = proj4.default(this.storage.projection.eq, [lng, lat]);
+                const [x, y] = proj4.default(this.storage.projection.eq, [lng, lat]);
 
                 this.storage.gcps.push({
                     name: "gcp" + (this.storage.gcps.length + 1).toString().padStart(2, '0'),

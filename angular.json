@@ -59,7 +59,7 @@
               "node_modules/leaflet/dist/leaflet.css"
             ],
             "scripts": [
-              "node_modules/proj4/dist/proj4.js"
+              "node_modules/u4g-proj4/dist/proj4.js"
             ]
           },
           "configurations": {

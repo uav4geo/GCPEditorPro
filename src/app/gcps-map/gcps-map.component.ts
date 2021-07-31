@@ -4,7 +4,7 @@ import { GCP } from '../gcps-utils.service';
 import { Router } from '@angular/router';
 import { icon, Map, marker } from 'leaflet';
 import * as L from 'leaflet';
-import * as proj4 from 'proj4';
+import * as proj4 from 'u4g-proj4';
 import Autolayers from './Leaflet.Autolayers/leaflet-autolayers';
 import SimpleMarkers from './Leaflet.SimpleMarkers/Control.SimpleMarkers';
 import Geocoder from './Leaflet.Geocoder/Control.Geocoder';
@@ -52,7 +52,8 @@ export class GcpsMapComponent implements OnInit {
             const coords = proj4.default.transform(
                 prj,
                 proj4.default.WGS84,
-                [item.easting, item.northing, item.elevation]);
+                [item.easting, item.northing, item.elevation],
+                true);
             const elevation = isNaN(item.elevation) ? "None" : item.elevation;
 
             const markerLayer = marker(new L.LatLng(coords.y, coords.x, coords.z), {
@@ -208,7 +209,10 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
             add_marker_callback: latlng => {
                 // Get marker location and convert to user proj
                 const {lat, lng} = latlng;
-                const [x, y] = proj4.default(this.storage.projection.eq, [lng, lat]);
+                const [x, y] = proj4.default.transform(proj4.default.WGS84,
+                    this.storage.projection.eq,
+                    [lng, lat],
+                    true);
 
                 this.storage.gcps.push({
                     name: "gcp" + (this.storage.gcps.length + 1).toString().padStart(2, '0'),

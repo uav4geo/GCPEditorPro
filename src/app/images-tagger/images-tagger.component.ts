@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
@@ -6,6 +6,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
 import * as rfdc from 'rfdc';
 import { PinLocation } from '../smartimage/smartimage.component';
+import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 const clone = rfdc();
 
@@ -26,7 +28,12 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     @ViewChild('imagesUpload') imagesUpload: ElementRef;
 
-    constructor(private router: Router, private route: ActivatedRoute, private storage: StorageService, private sanitizer: DomSanitizer, private appRef: ApplicationRef) {
+    constructor(private router: Router,
+        private route: ActivatedRoute,
+        private storage: StorageService,
+        private sanitizer: DomSanitizer,
+        private appRef: ApplicationRef,
+        private modalService: NgbModal) {
 
         if (typeof storage.gcps === 'undefined' ||
             storage.gcps === null ||
@@ -43,10 +50,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
     }
 
-    ngAfterViewInit(): void{
+    ngAfterViewInit(): void {
         this.handleDrop = e => {
             this.handleImages(e.detail.files);
-        };  
+        };
         window.addEventListener("droppedFiles", this.handleDrop);
     }
 
@@ -57,7 +64,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.router.navigateByUrl('/');
             return;
         }
-        
+
         const matches = this.storage.gcps.filter(gcp => gcp.name === gcpName);
 
         if (matches.length === 0) {
@@ -69,8 +76,12 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.gcp = matches[0];
 
         this.images = this.storage.images.map(img => {
-            const res = this.storage.imageGcps.find(item => item.gcpName === gcpName && item.imgName === img.name);
-            
+
+            const gcps = this.storage.imageGcps.filter(imgGcp => imgGcp.imgName === img.name);
+            const res = gcps.find(item => item.gcpName === gcpName);
+
+            //const res = this.storage.imageGcps.find(item => item.gcpName === gcpName && item.imgName === img.name);
+
             if (res !== undefined) {
                 return {
                     image: {
@@ -85,7 +96,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     },
                     isTagged: res.imX !== 0 && res.imY !== 0,
                     pinLocation: { x: res.imX, y: res.imY },
-                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null
+                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
+                    otherGcps: gcps.map(gcp => gcp.gcpName)
                 };
             } else {
                 return {
@@ -101,15 +113,16 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     },
                     isTagged: false,
                     pinLocation: null,
-                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null
+                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
+                    otherGcps: gcps.map(gcp => gcp.gcpName)
                 };
-            }            
+            }
 
         });
 
     }
 
-    public handleImages(files){
+    public handleImages(files) {
         for (const file of files) { // for multiple files
             (f => {
                 const name = f.name;
@@ -137,7 +150,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                         },
                         isTagged: false,
                         pinLocation: null,
-                        imageUrl: image.url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(image.url) : null
+                        imageUrl: image.url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(image.url) : null,
+                        otherGcps: []
                     };
                     this.images.push(descr);
                     // Otherwise we add the loaded data to the array
@@ -189,12 +203,63 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     public remove(desc: ImageDescriptor) {
-        this.images = this.images.filter(item => item.image.imgName !== desc.image.imgName);
 
-        this.storage.removeImage(desc.image.imgName);
-        
-        // Notify smart images that pins might have to be refreshed
-        window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
+        let internal_remove = () => {
+            this.images = this.images.filter(item => item.image.imgName !== desc.image.imgName);
+            this.storage.removeImage(desc.image.imgName);
+
+            // Notify smart images that pins might have to be refreshed
+            window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
+        };
+
+        if (desc.otherGcps.length > 0) {
+
+            const modalRef = this.modalService.open(ConfirmDialogComponent, { ariaLabelledBy: 'modal-basic-title' });
+
+            modalRef.componentInstance.title = "Remove image";
+            modalRef.componentInstance.text = "This image is associated with other GCPs. Do you want to remove it from the list?";
+            modalRef.result.then((result) => {
+                if (result === 'yes') internal_remove();
+            });
+
+        } else {
+            internal_remove();
+        }
+
+    }
+
+    public getClass(desc: ImageDescriptor) {
+
+        let cls = null;
+
+        if (desc.imageUrl !== null) {
+            if (desc.isTagged) {
+                cls = 'badge-success';
+            } else {
+                if (desc.otherGcps.length !== 0) {
+                    cls = 'badge-primary';
+                } else {
+                    cls = 'badge-info';
+                }
+            }
+        } else {
+            cls = 'badge-warning';
+        }
+
+        var obj = {};
+        obj[cls] = true;
+        return obj;
+    }
+
+    public getName(desc: ImageDescriptor) {
+
+        let name = desc.image.imgName;
+
+        if (desc.otherGcps.length !== 0) {
+            name = name + ' (' + desc.otherGcps.join(', ') + ')';
+        }
+
+        return name;
     }
 }
 
@@ -203,4 +268,5 @@ class ImageDescriptor {
     public isTagged: boolean;
     public pinLocation: PinLocation;
     public imageUrl: SafeResourceUrl;
+    public otherGcps: string[];
 }

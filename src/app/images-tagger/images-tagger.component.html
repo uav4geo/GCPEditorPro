@@ -13,11 +13,8 @@
     <div class="col" *ngIf="images !== null">
         <div *ngFor="let desc of images" class="align-top d-inline-block text-center border"
             [ngClass]="{'w-33': images.length >= 3, 'w-50': images.length <= 2}">
-            <span class="badge d-block rounded-0" [ngClass]="{                
-                'badge-success': desc.imageUrl !== null && desc.isTagged,
-                'badge-info': desc.imageUrl !== null && !desc.isTagged,
-                'badge-warning': desc.imageUrl == null}">
-                <h5 class="m-1">{{desc.image.imgName}}</h5>
+            <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
+                <h5 class="m-1">{{getName(desc)}}</h5>
                 <button type="button" class="close" aria-label="Close" (click)="remove(desc)">
                     <span aria-hidden="true">&times;</span>
                 </button>

@@ -20,6 +20,7 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { SmartimageComponent } from './smartimage/smartimage.component';
+import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 
 @NgModule({
     declarations: [
@@ -32,7 +33,8 @@ import { SmartimageComponent } from './smartimage/smartimage.component';
         GcpsMapComponent,
         ImagesTaggerComponent,
         SmartimageComponent,
-        LicenseInfoComponent
+        LicenseInfoComponent,
+        ConfirmDialogComponent        
     ],
     imports: [
         BrowserModule,

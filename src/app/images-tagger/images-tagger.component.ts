@@ -57,7 +57,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.router.navigateByUrl('/');
             return;
         }
-
+        
         const matches = this.storage.gcps.filter(gcp => gcp.name === gcpName);
 
         if (matches.length === 0) {
@@ -68,15 +68,45 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.gcp = matches[0];
 
-        const tmp = clone(this.storage.imageGcps.filter(img => img.gcpName === gcpName));
+        this.images = this.storage.images.map(img => {
+            const res = this.storage.imageGcps.find(item => item.gcpName === gcpName && item.imgName === img.name);
+            
+            if (res !== undefined) {
+                return {
+                    image: {
+                        gcpName: this.gcp.name,
+                        geoX: this.gcp.easting,
+                        geoY: this.gcp.northing,
+                        geoZ: this.gcp.elevation,
+                        imX: res.imX,
+                        imY: res.imY,
+                        imgName: img.name,
+                        extras: []
+                    },
+                    isTagged: res.imX !== 0 && res.imY !== 0,
+                    pinLocation: { x: res.imX, y: res.imY },
+                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null
+                };
+            } else {
+                return {
+                    image: {
+                        gcpName: this.gcp.name,
+                        geoX: this.gcp.easting,
+                        geoY: this.gcp.northing,
+                        geoZ: this.gcp.elevation,
+                        imX: 0,
+                        imY: 0,
+                        imgName: img.name,
+                        extras: []
+                    },
+                    isTagged: false,
+                    pinLocation: null,
+                    imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null
+                };
+            }            
 
-        this.images = tmp.map(itm => (
-            {
-                image: itm,
-                isTagged: itm.imX !== 0 && itm.imY !== 0,
-                pinLocation: { x: itm.imX, y: itm.imY },
-                imageUrl: this.storage.getImageUrl(itm.imgName) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(itm.imgName)) : null
-            }));
+        });
+
     }
 
     public handleImages(files){
@@ -160,6 +190,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public remove(desc: ImageDescriptor) {
         this.images = this.images.filter(item => item.image.imgName !== desc.image.imgName);
+
+        this.storage.removeImage(desc.image.imgName);
         
         // Notify smart images that pins might have to be refreshed
         window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));

@@ -24,6 +24,18 @@ export class StorageService {
         return image;
     }
 
+    public removeImage(imageName: string) : void {
+        const match = this.images.filter(item => item.name === imageName);
+        if (match.length > 0) {
+            this.images.splice(this.images.indexOf(match[0]), 1);            
+        }        
+
+        const matchGcp = this.imageGcps.filter(item => item.imgName === imageName);
+        if (matchGcp.length > 0) {
+            this.imageGcps.splice(this.imageGcps.indexOf(matchGcp[0]), 1);
+        }
+    }
+
     public saveImageRaw(name: string, type: string, imageUrl: string): ImageInfo {
         const image: ImageInfo = {name, url: imageUrl};
         return this.saveImage(image);

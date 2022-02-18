@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { StorageService } from '../storage.service';
+import { GPSCoords, StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
@@ -8,6 +8,7 @@ import * as rfdc from 'rfdc';
 import { PinLocation } from '../smartimage/smartimage.component';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import * as EXIF from 'node_modules/exif-js/exif.js';
 
 const clone = rfdc();
 
@@ -97,7 +98,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     isTagged: res.imX !== 0 && res.imY !== 0,
                     pinLocation: { x: res.imX, y: res.imY },
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
-                    otherGcps: gcps.map(gcp => gcp.gcpName)
+                    otherGcps: gcps.map(gcp => gcp.gcpName),
+                    coords: img.getCoords()
                 };
             } else {
                 return {
@@ -114,7 +116,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     isTagged: false,
                     pinLocation: null,
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
-                    otherGcps: gcps.map(gcp => gcp.gcpName)
+                    otherGcps: gcps.map(gcp => gcp.gcpName),
+                    coords: img.getCoords()
                 };
             }
 
@@ -122,15 +125,18 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     }
 
-    public handleImages(files) {
+    public handleImages(files: File[]) {
+
         for (const file of files) { // for multiple files
             (f => {
                 const name = f.name;
                 const type = f.type;
+                
                 const url = (window.URL ? URL : webkitURL).createObjectURL(f);
+                const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
 
                 // Save image
-                const image = this.storage.saveImageRaw(name, type, url);
+                const image = this.storage.saveImageRaw(f, url);
 
                 const res = this.images.filter(item => item.image.imgName === name);
 
@@ -150,13 +156,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                         },
                         isTagged: false,
                         pinLocation: null,
-                        imageUrl: image.url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(image.url) : null,
-                        otherGcps: []
-                    };
+                        imageUrl: imageUrl,
+                        otherGcps: [],
+                        coords: image.getCoords()
+                    };                   
+
                     this.images.push(descr);
                     // Otherwise we add the loaded data to the array
                 } else {
-                    res[0].imageUrl = image.url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(image.url) : null;
+                    res[0].imageUrl = imageUrl;
                 }
             })(file);
         }
@@ -269,4 +277,5 @@ class ImageDescriptor {
     public pinLocation: PinLocation;
     public imageUrl: SafeResourceUrl;
     public otherGcps: string[];
+    public coords: Promise<GPSCoords>;
 }

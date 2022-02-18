@@ -2,6 +2,8 @@ import { Injectable, isDevMode } from '@angular/core';
 import { GCPsDescriptor, TxtDescriptor, GCP, ImageGcp, Projection, ElevationMeasureUnit } from './gcps-utils.service';
 import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
+import * as exif from 'node_modules/exif-js/exif.js';
+import * as EXIF from 'node_modules/exif-js/exif.js';
 
 @Injectable({
     providedIn: 'root'
@@ -24,7 +26,7 @@ export class StorageService {
         return image;
     }
 
-    public removeImage(imageName: string) : void {
+    public removeImage(imageName: string): void {
         const match = this.images.find(item => item.name === imageName);
         if (match) {
             this.images.splice(this.images.indexOf(match), 1);
@@ -33,8 +35,8 @@ export class StorageService {
         this.imageGcps = this.imageGcps.filter(item => item.imgName !== imageName);
     }
 
-    public saveImageRaw(name: string, type: string, imageUrl: string): ImageInfo {
-        const image: ImageInfo = {name, url: imageUrl};
+    public saveImageRaw(f: File, imageUrl: string): ImageInfo {
+        const image: ImageInfo = new ImageInfo(f, imageUrl);
         return this.saveImage(image);
     }
 
@@ -48,25 +50,25 @@ export class StorageService {
         }
     }
 
-    public hasLicense(): boolean{
+    public hasLicense(): boolean {
         return !!localStorage.getItem("license") && !this.getLicense().demo;
     }
 
-    public getLicense(): LicenseInfo{
-        if (!this.license){
+    public getLicense(): LicenseInfo {
+        if (!this.license) {
             const licstr = localStorage.getItem("license") || "";
             this.license = validate('gcpeditorpro', licstr);
         }
 
-        if (!this.license){
+        if (!this.license) {
             this.license = new DemoLicense();
         }
 
         return this.license;
     }
 
-    public saveLicense(license: string){
-        if (!validate('gcpeditorpro', license).demo){
+    public saveLicense(license: string) {
+        if (!validate('gcpeditorpro', license).demo) {
             this.license = null;
             localStorage.setItem("license", license);
         }
@@ -76,7 +78,60 @@ export class StorageService {
 }
 
 class ImageInfo {
+
+    constructor(file: File, url: string) {
+        this.name = file.name;
+        this.url = url;
+        this._file = file;
+    }
+
     public name: string;
     public url: string | null;
+    private _coords: GPSCoords;
+    private _file: File;
+
+    public getCoords() : Promise<GPSCoords> {
+
+        if (this._coords)             
+            return Promise.resolve(this._coords);
+        
+        const prom = new Promise<GPSCoords>((resolve, reject) => {  
+
+            this.getExif(this._file, ex => {
+
+                if (ex == null) {
+                    reject(null);
+                    return;
+                }
+
+                this._coords = {
+                    lat: ex.GPSLatitude,
+                    lng: ex.GPSLongitude,
+                    alt: ex.GPSAltitude,
+                }
+                resolve(this._coords);
+            });
+
+        });
+
+        return prom;
+        
+    }
+
+    private getExif(file: File, callback: (exif: any) => void) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const ex = EXIF.readFromBinaryFile(e.target.result);
+            callback(ex);
+        };
+        reader.readAsArrayBuffer(file);
+    }
 }
+
+export class GPSCoords {
+    public lat: number;
+    public lng: number;
+    public alt: number;
+}
+
 

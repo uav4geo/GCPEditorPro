@@ -1,7 +1,7 @@
 import { Component, OnInit, Output, EventEmitter, Input, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import * as Panzoom from '@panzoom/panzoom';
 import { fromEvent, timer, TimeoutError } from 'rxjs';
-import { CoordsXY } from '../common';
+import { CoordsXY } from '../../shared/common';
 
 @Component({
     selector: 'app-smartimage',

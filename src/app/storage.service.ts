@@ -4,7 +4,7 @@ import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
 import * as exif from 'node_modules/exif-js/exif.js';
 import * as EXIF from 'node_modules/exif-js/exif.js';
-import { GPSCoords } from './common';
+import { GPSCoords } from '../shared/common';
 
 @Injectable({
     providedIn: 'root'

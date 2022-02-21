@@ -9,7 +9,7 @@ import * as proj4 from 'proj4';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { GcpsDetectorService } from '../gcps-detector.service';
-import { CoordsXY, CoordsXYZ, GPSCoords } from '../common';
+import { CoordsXY, CoordsXYZ, GPSCoords } from '../../shared/common';
 
 const clone = rfdc();
 

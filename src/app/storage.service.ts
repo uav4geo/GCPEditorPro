@@ -104,11 +104,15 @@ class ImageInfo {
                     return;
                 }
 
+                let lat = ex.GPSLatitude;
+                let lng = ex.GPSLongitude;
+                
                 this._coords = {
-                    lat: ex.GPSLatitude,
-                    lng: ex.GPSLongitude,
+                    lat: typeof lat === 'object' ? lat[2] : lat,
+                    lng: typeof lng === 'object' ? lng[2] : lng,
                     alt: ex.GPSAltitude,
-                }
+                };
+
                 resolve(this._coords);
             });
 

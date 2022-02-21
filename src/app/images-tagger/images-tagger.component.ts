@@ -5,10 +5,10 @@ import { ImageGcp, GCP } from '../gcps-utils.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
 import * as rfdc from 'rfdc';
+import * as proj4 from 'proj4';
 import { PinLocation } from '../smartimage/smartimage.component';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import * as EXIF from 'node_modules/exif-js/exif.js';
 
 const clone = rfdc();
 
@@ -20,6 +20,7 @@ const clone = rfdc();
 export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public gcp: GCP;
+    public gcpCoords: CoordsXYZ;
     public errors: string[] = [];
 
     public images: ImageDescriptor[] = null;
@@ -76,12 +77,18 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.gcp = matches[0];
 
-        this.images = this.storage.images.map(img => {
+        const prj = proj4.default.Proj(this.storage.projection.eq);
+
+        // We need this to be able to calculate the distance
+        this.gcpCoords = proj4.default.transform(
+            prj,
+            proj4.default.WGS84,
+            [this.gcp.easting, this.gcp.northing, this.gcp.elevation]);
+
+        let temp = this.storage.images.map(img => {
 
             const gcps = this.storage.imageGcps.filter(imgGcp => imgGcp.imgName === img.name);
             const res = gcps.find(item => item.gcpName === gcpName);
-
-            //const res = this.storage.imageGcps.find(item => item.gcpName === gcpName && item.imgName === img.name);
 
             if (res !== undefined) {
                 return {
@@ -99,7 +106,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     pinLocation: { x: res.imX, y: res.imY },
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
-                    coords: img.getCoords()
+                    coords: img.getCoords(),
+                    distance: 0
                 };
             } else {
                 return {
@@ -117,9 +125,23 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     pinLocation: null,
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
-                    coords: img.getCoords()
+                    coords: img.getCoords(),
+                    distance: 0
                 };
             }
+
+        });
+
+        Promise.all(temp.map(item => item.coords)).then(coord => {
+            for (let i = 0; i < coord.length; i++) {
+                var coords = coord[i];
+                var item = temp[i];
+                item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coords.lat, coords.lng);
+            }
+
+            this.images = temp.sort((a, b) => {
+                return a.distance > b.distance ? 1 : -1;
+            });
 
         });
 
@@ -127,11 +149,13 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public handleImages(files: File[]) {
 
+        var newImages = [];
+
         for (const file of files) { // for multiple files
             (f => {
                 const name = f.name;
                 const type = f.type;
-                
+
                 const url = (window.URL ? URL : webkitURL).createObjectURL(f);
                 const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
 
@@ -158,15 +182,32 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                         pinLocation: null,
                         imageUrl: imageUrl,
                         otherGcps: [],
-                        coords: image.getCoords()
-                    };                   
+                        coords: image.getCoords(),
+                        distance: 0
+                    };
 
-                    this.images.push(descr);
+                    newImages.push(descr);
                     // Otherwise we add the loaded data to the array
                 } else {
                     res[0].imageUrl = imageUrl;
                 }
             })(file);
+
+            let temp = this.images.concat(newImages);
+
+            Promise.all(temp.map(item => item.coords)).then(coord => {
+                for (let i = 0; i < coord.length; i++) {
+                    var coords = coord[i];
+                    var item = temp[i];
+                    item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coords.lat, coords.lng);
+                }
+
+                this.images = temp.sort((a, b) => {
+                    return a.distance > b.distance ? 1 : -1;
+                });
+
+            });
+
         }
 
         // Notify smart images that pins might have to be refreshed
@@ -269,6 +310,25 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         return name;
     }
+
+    // Credit https://stackoverflow.com/a/27943
+    private getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+        var R = 6371; // Radius of the earth in km
+        var dLat = this.deg2rad(lat2 - lat1);  // deg2rad below
+        var dLon = this.deg2rad(lon2 - lon1);
+        var a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+            ;
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c; // Distance in km
+        return d;
+    }
+
+    private deg2rad(deg) {
+        return deg * (Math.PI / 180)
+    }
 }
 
 class ImageDescriptor {
@@ -278,4 +338,11 @@ class ImageDescriptor {
     public imageUrl: SafeResourceUrl;
     public otherGcps: string[];
     public coords: Promise<GPSCoords>;
+    public distance: number;
+}
+
+class CoordsXYZ {
+    public x: number;
+    public y: number;
+    public z: number;
 }

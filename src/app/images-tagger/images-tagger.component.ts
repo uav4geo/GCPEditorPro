@@ -1,14 +1,15 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { GPSCoords, StorageService } from '../storage.service';
+import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
 import * as rfdc from 'rfdc';
 import * as proj4 from 'proj4';
-import { PinLocation } from '../smartimage/smartimage.component';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { GcpsDetectorService } from '../gcps-detector.service';
+import { CoordsXY, CoordsXYZ, GPSCoords } from '../common';
 
 const clone = rfdc();
 
@@ -35,7 +36,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         private storage: StorageService,
         private sanitizer: DomSanitizer,
         private appRef: ApplicationRef,
-        private modalService: NgbModal) {
+        private modalService: NgbModal,
+        private detector: GcpsDetectorService) {
 
         if (typeof storage.gcps === 'undefined' ||
             storage.gcps === null ||
@@ -257,7 +259,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.router.navigateByUrl('gcps-map');
     }
 
-    public pin(location: PinLocation, desc: ImageDescriptor): void {
+    public pin(location: CoordsXY, desc: ImageDescriptor): void {
         desc.isTagged = true;
         desc.image.imX = location.x;
         desc.image.imY = location.y;
@@ -316,11 +318,22 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         let name = desc.image.imgName;
 
-        if (desc.otherGcps.length !== 0) {
+        if (desc.otherGcps.length !== 0)
             name = name + ' (' + desc.otherGcps.join(', ') + ')';
-        }
 
         return name;
+    }
+
+    public detect(desc: ImageDescriptor) {
+
+        this.detector.detect(desc.image.imgName).then(coords => {
+
+            if (coords != null) {
+                this.pin(coords, desc);
+                desc.pinLocation = coords;
+            }
+            
+        });
     }
 
     // Credit https://stackoverflow.com/a/27943
@@ -346,15 +359,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 class ImageDescriptor {
     public image: ImageGcp;
     public isTagged: boolean;
-    public pinLocation: PinLocation;
+    public pinLocation: CoordsXY;
     public imageUrl: SafeResourceUrl;
     public otherGcps: string[];
     public coords: Promise<GPSCoords>;
     public distance: number;
 }
 
-class CoordsXYZ {
-    public x: number;
-    public y: number;
-    public z: number;
-}

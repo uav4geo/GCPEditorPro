@@ -4,6 +4,7 @@ import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
 import * as exif from 'node_modules/exif-js/exif.js';
 import * as EXIF from 'node_modules/exif-js/exif.js';
+import { GPSCoords } from './common';
 
 @Injectable({
     providedIn: 'root'
@@ -131,12 +132,6 @@ class ImageInfo {
         };
         reader.readAsArrayBuffer(file);
     }
-}
-
-export class GPSCoords {
-    public lat: number;
-    public lng: number;
-    public alt: number;
 }
 
 

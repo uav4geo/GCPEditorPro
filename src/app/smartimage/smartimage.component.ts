@@ -1,6 +1,7 @@
 import { Component, OnInit, Output, EventEmitter, Input, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import * as Panzoom from '@panzoom/panzoom';
 import { fromEvent, timer, TimeoutError } from 'rxjs';
+import { CoordsXY } from '../common';
 
 @Component({
     selector: 'app-smartimage',
@@ -29,13 +30,13 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
     @ViewChild('pin') pinDiv: ElementRef;
     @ViewChild('msg') msgDiv: ElementRef;
 
-    pinLocationValue: PinLocation = null;
+    pinLocationValue: CoordsXY = null;
     onSmartImagesLayoutChanged = null;
 
     private panzoom: Panzoom.PanzoomObject = null;
 
     @Output()
-    pinLocationChange = new EventEmitter<PinLocation>();
+    pinLocationChange = new EventEmitter<CoordsXY>();
 
     private wheelMessageTimeout: any;
 
@@ -125,7 +126,7 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         window.addEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
     }
 
-    ngOnDestroy(){
+    ngOnDestroy() {
         if (this.onSmartImagesLayoutChanged) window.removeEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
     }
 
@@ -143,13 +144,12 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         }
         const location = this.getPinLocation();
         if (!location) return;
-        
-        const { left, top } = location;
-        this.pinDiv.nativeElement.style.left = (left - this.pinDiv.nativeElement.width / 2) + 'px';
-        this.pinDiv.nativeElement.style.top = (top - this.pinDiv.nativeElement.height / 2) + 'px';
+
+        this.pinDiv.nativeElement.style.left = (location.x - this.pinDiv.nativeElement.width / 2) + 'px';
+        this.pinDiv.nativeElement.style.top = (location.y - this.pinDiv.nativeElement.height / 2) + 'px';
     }
 
-    private getPinLocation() {
+    private getPinLocation(): CoordsXY {
 
         if (this.panzoom === null) {
             return;
@@ -168,7 +168,7 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const left = (rect.left - parentRect.left) + this.pinLocationValue.x * scale * zoom;
         const top = (rect.top - parentRect.top) + this.pinLocationValue.y * scale * zoom;
 
-        return { left, top };
+        return { x: left, y: top };
     }
 
     ngOnInit(): void {
@@ -177,7 +177,7 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
 
     }
 
-    private getPos(e: MouseEvent): PinLocation {
+    private getPos(e: MouseEvent): CoordsXY {
         const zoom = this.panzoom.getScale();
 
         const rect = this.img.nativeElement.getClientRects()[0];
@@ -199,9 +199,4 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         return { x: realX, y: realY };
     }
 
-}
-
-export class PinLocation {
-    public x: number;
-    public y: number;
 }

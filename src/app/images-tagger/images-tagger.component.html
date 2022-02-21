@@ -4,7 +4,7 @@
             <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)" accept="image/*"
                 multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
-                Select or drag &amp; drop images where {{gcp.name}} is visible, then click it in each image
+                Select or drag &amp; drop images where {{gcp.name}} is visible, then click it in each image or use the aumatic detection button.
             </label>
         </div>
     </div>
@@ -18,6 +18,11 @@
                 <button type="button" class="close" aria-label="Close" (click)="remove(desc)">
                     <span aria-hidden="true">&times;</span>
                 </button>
+                <a class="find" (click)="detect(desc)">
+                    <div class="d-flex align-items-center h-100">
+                        <fa-icon icon="search"></fa-icon>
+                    </div>
+                </a>
             </span>
             <app-smartimage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation" (pin)="pin($event, desc)">
             </app-smartimage>

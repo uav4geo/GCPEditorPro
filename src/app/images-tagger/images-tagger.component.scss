@@ -8,6 +8,15 @@
         right: 10px;
         top: 6px;
     }
+    .find {
+        position: absolute;
+        left: 10px;
+        height: 100%;
+        top: 0;
+        &:hover {
+            cursor: pointer;
+        }
+    }
     h5{
         text-overflow: ellipsis;
         overflow: hidden;

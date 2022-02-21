@@ -52,6 +52,8 @@ export function base64ArrayBuffer(arrayBuffer) {
 
     return base64;
 }
+
+
 // tslint:enable:no-bitwise
 /*
 export function getMimeType(fileName: string) {

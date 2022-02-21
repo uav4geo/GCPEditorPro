@@ -7,9 +7,38 @@ import * as cv from "@techstark/opencv-js";
     providedIn: 'root'
 })
 export class GcpsDetectorService {
-    detect(imgName: string): Promise<CoordsXY> {
 
-        
+    private areModelsLoaded = false;
+
+    GcpsDetectorService() {}
+
+    async loadDataFile(cvFilePath, url) {
+        // see https://docs.opencv.org/master/utils.js
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        const data = new Uint8Array(buffer);
+        cv.FS_createDataFile("/", cvFilePath, data, true, false, false);
+    }
+
+    async loadModels() {
+        try {
+            await this.loadDataFile(
+                "square.xml",
+                "assets/models/square.xml"
+            );
+
+            this.areModelsLoaded = true;
+
+        } catch (error) {
+            console.error(error);
+        }
+
+    }
+
+    async detect(imgName: string): Promise<CoordsXY> {
+
+        if (!this.areModelsLoaded) 
+            await this.loadModels();
 
         return Promise.resolve({
             x: 400,
@@ -20,4 +49,5 @@ export class GcpsDetectorService {
     }
 
     constructor() { }
+
 }

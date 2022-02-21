@@ -57,6 +57,11 @@
     "dist": "./node_modules/.bin/electron-builder"
   },
   "private": true,
+  "browser": {
+    "fs": false,
+    "path": false,
+    "crypto": false
+  },
   "dependencies": {
     "@angular/animations": "~9.1.1",
     "@angular/common": "~9.1.1",

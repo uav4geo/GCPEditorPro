@@ -76,6 +76,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@ng-bootstrap/ng-bootstrap": "^6.0.2",
     "@panzoom/panzoom": "^4.1.0",
+    "@techstark/opencv-js": "^4.5.4-release.1",
     "@types/file-saver": "^2.0.1",
     "@types/leaflet": "^1.5.12",
     "@types/proj4": "^2.5.0",

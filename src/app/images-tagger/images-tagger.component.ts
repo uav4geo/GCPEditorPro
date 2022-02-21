@@ -132,11 +132,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         });
 
-        Promise.all(temp.map(item => item.coords)).then(coord => {
-            for (let i = 0; i < coord.length; i++) {
-                var coords = coord[i];
+        Promise.all(temp.map(item => item.coords)).then(coords => {
+            for (let i = 0; i < coords.length; i++) {
+                var coord = coords[i];
                 var item = temp[i];
-                item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coords.lat, coords.lng);
+
+                if (coord == null) {
+                    item.distance = Number.MAX_VALUE;
+                    continue;
+                }
+
+                item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coord.lat, coord.lng);
             }
 
             this.images = temp.sort((a, b) => {
@@ -195,11 +201,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             let temp = this.images.concat(newImages);
 
-            Promise.all(temp.map(item => item.coords)).then(coord => {
-                for (let i = 0; i < coord.length; i++) {
-                    var coords = coord[i];
+            Promise.all(temp.map(item => item.coords)).then(coords => {
+                for (let i = 0; i < coords.length; i++) {
+                    var coord = coords[i];
                     var item = temp[i];
-                    item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coords.lat, coords.lng);
+
+                    if (coord == null) {
+                        item.distance = Number.MAX_VALUE;
+                        continue;
+                    }
+
+                    item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coord.lat, coord.lng);
                 }
 
                 this.images = temp.sort((a, b) => {

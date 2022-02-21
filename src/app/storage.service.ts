@@ -99,8 +99,9 @@ class ImageInfo {
 
             this.getExif(this._file, ex => {
 
-                if (ex == null) {
-                    reject(null);
+                if (!ex) {
+                    this._coords = null;
+                    resolve(null);
                     return;
                 }
 

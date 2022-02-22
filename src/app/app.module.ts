@@ -27,7 +27,7 @@ const openCVConfig: OpenCVOptions = {
     scriptUrl: `assets/opencv/opencv.js`,
     wasmBinaryFile: 'wasm/opencv_js.wasm',
     usingWasm: true
-  };
+};
 
 @NgModule({
     declarations: [
@@ -41,7 +41,7 @@ const openCVConfig: OpenCVOptions = {
         ImagesTaggerComponent,
         SmartimageComponent,
         LicenseInfoComponent,
-        ConfirmDialogComponent        
+        ConfirmDialogComponent
     ],
     imports: [
         BrowserModule,

@@ -29,7 +29,6 @@
         </div>
     </div>
 </div>
-
 <div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">    
     <button class="btn btn-primary ml-3 my-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
@@ -37,4 +36,7 @@
     <button class="btn btn-primary mr-3 my-3" (click)="ok()">Save Changes
         <fa-icon icon="save" class="ml-2"></fa-icon>
     </button>
+</div>
+<div class="loader" *ngIf="isLoading">
+    <fa-icon icon="cog" class="fa-spin"></fa-icon>
 </div>

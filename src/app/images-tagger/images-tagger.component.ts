@@ -23,6 +23,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public gcp: GCP;
     public gcpCoords: CoordsXYZ;
     public errors: string[] = [];
+    public isLoading = false;
 
     public images: ImageDescriptor[] = null;
 
@@ -157,6 +158,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public handleImages(files: File[]) {
 
+        this.isLoading = true;
+
         var newImages = [];
 
         for (const file of files) { // for multiple files
@@ -220,12 +223,14 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     return a.distance > b.distance ? 1 : -1;
                 });
 
+                this.isLoading = false;
+
+                // Notify smart images that pins might have to be refreshed
+                window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
+
             });
 
         }
-
-        // Notify smart images that pins might have to be refreshed
-        window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
 
         // this.imagesUpload.nativeElement.value = null;
     }
@@ -326,13 +331,20 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public detect(desc: ImageDescriptor) {
 
+        this.isLoading = true;
+        
         this.detector.detect(desc.image.imgName).then(coords => {
 
             if (coords != null) {
                 this.pin(coords, desc);
                 desc.pinLocation = coords;
             }
+
+            this.isLoading = false;
             
+        }, err => {
+            console.log(err);
+            this.isLoading = false;
         });
     }
 

@@ -5,6 +5,7 @@ import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 import { tap, switchMap, filter } from 'rxjs/operators';
 import { StorageService } from './storage.service';
 import { DOCUMENT } from '@angular/common';
+import { Point } from 'leaflet';
 
 declare var cv: any;
 
@@ -19,21 +20,23 @@ export class GcpsDetectorService {
         private storage: StorageService,
         rendererFactory: RendererFactory2,
         @Inject(DOCUMENT) private document: Document,
-        ) {
-            
+    ) {
+
         this.r2 = rendererFactory.createRenderer(null, null);
     }
 
     private areClassifiersLoaded: boolean;
 
-    private classifiers = ["gcp-square.xml"];
+    private classifiers = [
+        "gcp-square-base.xml"  
+    ];
 
     loadClassifiers(): Promise<any> {
 
         return Promise.all(
-            this.classifiers.map(c => 
+            this.classifiers.map(c =>
                 this.ngOpenCVService.createFileFromUrl(c, `assets/opencv/data/haarcascades/${c}`).toPromise())
-            );
+        );
     }
 
     async detect(imgName: string): Promise<CoordsXY> {
@@ -42,7 +45,7 @@ export class GcpsDetectorService {
             await this.loadClassifiers();
             this.areClassifiersLoaded = true;
         }
-        
+
         return new Promise<CoordsXY>((resolve, reject) => {
 
             var url = this.storage.getImageUrl(imgName);
@@ -58,7 +61,7 @@ export class GcpsDetectorService {
             this.r2.setStyle(container, 'z-index', '-1');
 
             this.r2.appendChild(this.document.body, container);
-            
+
             // This is a shitshow, but it works.
             const imgTag = this.r2.createElement('img');
             this.r2.setAttribute(imgTag, 'id', 'tmp-img');
@@ -79,37 +82,44 @@ export class GcpsDetectorService {
 
                     let res = null;
 
-                    console.log('loaded imgage with size: ', img.size());
+                    console.log('loaded image with size: ', img.size());
 
-                    for(let i = 0; i < this.classifiers.length; i++) {
-                        
+                    for (let i = 0; i < this.classifiers.length; i++) {
+
+                        console.log("detecting with classifier: ", this.classifiers[i]);
+
                         const classifier = new cv.CascadeClassifier();
                         classifier.load(this.classifiers[i]);
                         const rects = new cv.RectVector();
 
                         classifier.detectMultiScale(img, rects, scale, neighbors, 0, minSize, maxSize);
-        
+
                         // We cant estimate the quality of the match, so we just return the first one
                         if (rects.size() > 0) {
+
                             const rect = rects.get(0);
-                            const x = rect.x + (rect.width / 2);
-                            const y = rect.y + (rect.height / 2);
-                            res = { x, y };
+
+                            res = { x: rect.x + (rect.width / 2), y: rect.y + (rect.height / 2) };
+
                             console.log("Found GCP at ", res);
+
+                            rects.delete();
+                            classifier.delete();
+
                             break;
-                        } else {
+
+                        } else
                             console.log("No GCP found");
-                        }
-    
+
                         rects.delete();
                         classifier.delete();
-                        
+
                     }
 
                     this.r2.removeChild(this.document.body, container);
                     img.delete();
-                        
-                    resolve(res);                    
+
+                    resolve(res);
 
                 } catch (e) {
                     reject(e);

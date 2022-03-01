@@ -100,20 +100,24 @@ class ImageInfo {
 
             this.getExif(this._file, ex => {
 
-                if (!ex) {
-                    this._coords = null;
+                this._coords = null;
+
+                if (!ex) {                    
                     resolve(null);
                     return;
                 }
-
-                let lat = ex.GPSLatitude;
-                let lng = ex.GPSLongitude;
                 
-                this._coords = {
-                    lat: typeof lat === 'object' ? lat[2] : lat,
-                    lng: typeof lng === 'object' ? lng[2] : lng,
-                    alt: ex.GPSAltitude,
-                };
+                if (ex.GPSLatitude && ex.GPSLongitude) {
+
+                    let lat = ex.GPSLatitude[0] + ex.GPSLatitude[1] / 60 + ex.GPSLatitude[2] / 3600;
+                    let lng = ex.GPSLongitude[0] + ex.GPSLongitude[1] / 60 + ex.GPSLongitude[2] / 3600;
+                    
+                    this._coords = {
+                        lat: ex.GPSLatitudeRef == 'N' ? lat : -lat,
+                        lng: ex.GPSLongitudeRef == 'E' ? lng : -lng,
+                        alt: ex.GPSAltitude,
+                    };                    
+                }
 
                 resolve(this._coords);
             });

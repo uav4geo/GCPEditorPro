@@ -1,9 +1,10 @@
 .badge {
-    .success, .info {
+    .success,
+    .info {
         cursor: pointer;
     }
     position: relative;
-    .close{
+    .close {
         position: absolute;
         right: 10px;
         top: 6px;
@@ -17,13 +18,13 @@
             cursor: pointer;
         }
     }
-    h5{
+    h5 {
         text-overflow: ellipsis;
         overflow: hidden;
     }
 }
 
-input{
+input {
     user-select: none;
 }
 

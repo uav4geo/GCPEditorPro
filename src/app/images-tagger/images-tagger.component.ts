@@ -10,6 +10,7 @@ import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { GcpsDetectorService } from '../gcps-detector.service';
 import { CoordsXY, CoordsXYZ, GPSCoords } from '../../shared/common';
+import { getDistanceFromLatLonInM, toHumanDistance } from 'src/shared/utils';
 
 const clone = rfdc();
 
@@ -25,7 +26,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public errors: string[] = [];
     public isLoading = false;
 
-    public images: ImageDescriptor[] = null;
+    public filterDistance: number = 100;
+
+    public images: ImageDescriptor[] = [];
+    public rawImages: ImageDescriptor[] = [];
 
     @ViewChild('dnd') dnd: ElementRef;
     private handleDrop = null;
@@ -62,6 +66,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         window.addEventListener("droppedFiles", this.handleDrop);
     }
 
+
     ngOnInit(): void {
         const gcpName = this.route.snapshot.paramMap.get('gcp');
 
@@ -78,6 +83,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.isLoading = true;
+
         this.gcp = matches[0];
 
         const prj = proj4.default.Proj(this.storage.projection.eq);
@@ -86,9 +93,9 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.gcpCoords = proj4.default.transform(
             prj,
             proj4.default.WGS84,
-            [this.gcp.easting, this.gcp.northing, this.gcp.elevation]);
+            [this.gcp.northing, this.gcp.easting, this.gcp.elevation]);
 
-        let temp = this.storage.images.map(img => {
+        this.rawImages = this.storage.images.map(img => {
 
             const gcps = this.storage.imageGcps.filter(imgGcp => imgGcp.imgName === img.name);
             const res = gcps.find(item => item.gcpName === gcpName);
@@ -135,25 +142,34 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         });
 
-        Promise.all(temp.map(item => item.coords)).then(coords => {
+        Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
                 var coord = coords[i];
-                var item = temp[i];
+                var item = this.rawImages[i];
 
                 if (coord == null) {
                     item.distance = Number.MAX_VALUE;
                     continue;
                 }
 
-                item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coord.lat, coord.lng);
+                item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
             }
 
-            this.images = temp.sort((a, b) => {
-                return a.distance > b.distance ? 1 : -1;
-            });
+            this.images = this.rawImages
+                .filter(img => img.distance < this.filterDistance)
+                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });
+
+            this.isLoading = false;
 
         });
 
+    }
+
+    public filterImages() {
+       
+        this.images = this.filterDistance ? this.rawImages
+                .filter(img => img.distance < this.filterDistance)
+                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; }) : this.rawImages;
     }
 
     public handleImages(files: File[]) {
@@ -203,36 +219,33 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     res[0].imageUrl = imageUrl;
                 }
             })(file);
-
-            let temp = this.images.concat(newImages);
-
-            Promise.all(temp.map(item => item.coords)).then(coords => {
-                for (let i = 0; i < coords.length; i++) {
-                    var coord = coords[i];
-                    var item = temp[i];
-
-                    if (coord == null) {
-                        item.distance = Number.MAX_VALUE;
-                        continue;
-                    }
-
-                    item.distance = this.getDistanceFromLatLonInKm(this.gcpCoords.x, this.gcpCoords.y, coord.lat, coord.lng);
-                }
-
-                this.images = temp.sort((a, b) => {
-                    return a.distance > b.distance ? 1 : -1;
-                });
-
-                this.isLoading = false;
-
-                // Notify smart images that pins might have to be refreshed
-                window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
-
-            });
-
         }
 
-        // this.imagesUpload.nativeElement.value = null;
+        this.rawImages = this.rawImages.concat(newImages);
+
+        Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
+            for (let i = 0; i < coords.length; i++) {
+                var coord = coords[i];
+                var item = this.rawImages[i];
+
+                if (coord == null) {
+                    item.distance = Number.MAX_VALUE;
+                    continue;
+                }
+                item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
+            }
+
+            this.images = this.rawImages
+                .filter(img => img.distance < this.filterDistance)
+                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });
+
+            this.isLoading = false;
+
+            // Notify smart images that pins might have to be refreshed
+            window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
+
+        });
+
     }
 
     public imagesSelected(event) {
@@ -326,13 +339,16 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         if (desc.otherGcps.length !== 0)
             name = name + ' (' + desc.otherGcps.join(', ') + ')';
 
+        if (desc.distance)
+            name = name + ' (' + toHumanDistance(desc.distance) + ')';
+
         return name;
     }
 
     public detect(desc: ImageDescriptor) {
 
         this.isLoading = true;
-        
+
         this.detector.detect(desc.image.imgName).then(coords => {
 
             if (coords != null) {
@@ -341,31 +357,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             }
 
             this.isLoading = false;
-            
+
         }, err => {
             console.log(err);
             this.isLoading = false;
         });
     }
 
-    // Credit https://stackoverflow.com/a/27943
-    private getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-        var R = 6371; // Radius of the earth in km
-        var dLat = this.deg2rad(lat2 - lat1);  // deg2rad below
-        var dLon = this.deg2rad(lon2 - lon1);
-        var a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2)
-            ;
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var d = R * c; // Distance in km
-        return d;
+    public detectImages() {
+        //
     }
 
-    private deg2rad(deg) {
-        return deg * (Math.PI / 180)
-    }
 }
 
 class ImageDescriptor {

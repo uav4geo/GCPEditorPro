@@ -1,12 +1,40 @@
 <div class="row">
-    <div class="col-md-12">
+    <div class="col">
+        <div class="alert alert-info">
+            <fa-icon icon="info-circle" class="mr-3"></fa-icon>Select or drag &amp; drop images where {{gcp.name}} is
+            visible, then click it in each image or use the automatic detection button.
+        </div>
+    </div>
+</div>
+<div class="form-row mt-2">
+    <div class="col">
         <div class="custom-file">
-            <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)" accept="image/*"
-                multiple="true" id="imagesFiles">
+            <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)"
+                accept="image/*" multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
-                Select or drag &amp; drop images where {{gcp.name}} is visible, then click it in each image or use the automatic detection button.
+                Upload images
             </label>
         </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">{{images.length}} / {{rawImages.length}}</span>
+              </div>
+            <input type="number" [(ngModel)]="filterDistance" step="1" placeholder="Distance in meters" min="0" class="form-control">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button" (click)="filterImages()">
+                    <fa-icon icon="filter" class="mr-2"></fa-icon>
+                    Filter (meters)
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <button class="btn btn-info" type="button">
+            <fa-icon icon="search" class="mr-2"></fa-icon>
+            Detect GCPs
+        </button>
     </div>
 </div>
 <div class="row mt-2">
@@ -24,12 +52,13 @@
                     </div>
                 </a>
             </span>
-            <app-smartimage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation" (pin)="pin($event, desc)">
+            <app-smartimage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
+                (pin)="pin($event, desc)">
             </app-smartimage>
         </div>
     </div>
 </div>
-<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">    
+<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">
     <button class="btn btn-primary ml-3 my-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
     </button>

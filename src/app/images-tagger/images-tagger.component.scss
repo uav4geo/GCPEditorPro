@@ -44,5 +44,12 @@ input {
         width: auto;
         min-width: 300px;
         background-color: white;
+        position: relative;
+    }
+    .close-icon {
+        position: absolute;
+        right: 10px;
+        top: 0;
+        cursor: pointer;        
     }
 }

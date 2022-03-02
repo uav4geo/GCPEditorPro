@@ -78,6 +78,10 @@
 </div>
 <div class="loader" *ngIf="isLoading">
     <div class="loader-content rounded shadow p-4">
+        <!-- close icon -->
+        <div class="close-icon">
+            <fa-icon icon="times" class="text-danger" (click)="interrupt()"></fa-icon>
+        </div>
         <div class="text-center">
             <fa-icon icon="cog" [spin]="true" size="2x"></fa-icon>
         </div>

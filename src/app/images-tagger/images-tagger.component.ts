@@ -98,7 +98,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             proj4.default.WGS84,
             [this.gcp.northing, this.gcp.easting, this.gcp.elevation]);
 
-        if (this.storage.images.length === 0) 
+        if (this.storage.images.length === 0)
             return;
 
         this.setProgress("Loading images...", 0);
@@ -174,16 +174,16 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     public filterImages() {
-       
+
         this.images = this.filterDistance ? this.rawImages
-                .filter(img => img.distance == null || img.distance < this.filterDistance)
-                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; }) : this.rawImages;
+            .filter(img => img.distance == null || img.distance < this.filterDistance)
+            .sort((a, b) => { return a.distance > b.distance ? 1 : -1; }) : this.rawImages;
     }
 
     public handleImages(files: File[]) {
 
         if (files.length == 0) return;
-        
+
         this.setProgress("Loading images...");
 
         var newImages = [];
@@ -232,7 +232,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 } else {
                     res[0].imageUrl = imageUrl;
                 }
-                
+
             })(file, count++);
         }
 
@@ -386,15 +386,22 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     public async detectImages() {
-        
+
         this.setProgress("Detecting GCPs in images");
-        
+
         for (let i = 0; i < this.images.length; i++) {
+
             let item = this.images[i];
             let progress = i / this.images.length;
-            
-            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress);
 
+            if (this.requestedInterrupt) {
+                console.warn("Received interrupt signal");
+                this.setProgress("Interrupted", progress, true);
+                this.requestedInterrupt = false;
+                return;
+            }
+
+            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress);
             const coords = await this.detector.detect(item.image.imgName);
 
             if (coords != null) {
@@ -406,23 +413,28 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             } else {
                 this.setProgress("No GCP found", progress);
             }
-            
+
         }
 
         this.setProgress("Done", 1, true);
-        
+
+    }
+
+    public requestedInterrupt: boolean = false;
+
+    public interrupt() {
+        this.requestedInterrupt = true;
+        this.loadingMessage = "Interrupting...";
     }
 
     private setProgress(text: string, progress: number = 0, close: boolean = false) {
 
         console.log(text, progress, close);
-        
-        setTimeout(() => {
-            this.isLoading = true;     
-            this.loadingProgress = progress;
-            this.loadingMessage = text;
-        }, 1);
-        
+
+        this.isLoading = true;
+        this.loadingProgress = progress;
+        this.loadingMessage = text;
+
         if (close) {
             setTimeout(() => {
                 this.isLoading = false;

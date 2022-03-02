@@ -26,7 +26,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public errors: string[] = [];
     public isLoading = false;
 
-    public filterDistance: number = 100;
+    // We could save this on local storage, but it's not necessary
+    public filterDistance: number = 10;
 
     public images: ImageDescriptor[] = [];
     public rawImages: ImageDescriptor[] = [];
@@ -117,7 +118,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
                     coords: img.getCoords(),
-                    distance: 0
+                    distance: null
                 };
             } else {
                 return {
@@ -136,7 +137,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
                     coords: img.getCoords(),
-                    distance: 0
+                    distance: null
                 };
             }
 
@@ -147,17 +148,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 var coord = coords[i];
                 var item = this.rawImages[i];
 
-                if (coord == null) {
-                    item.distance = Number.MAX_VALUE;
+                /*if (coord == null) {
+                    item.distance = null;
                     continue;
-                }
-
-                item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
+                }*/
+                if (coord)
+                    item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
             }
 
-            this.images = this.rawImages
-                .filter(img => img.distance < this.filterDistance)
-                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });
+            this.filterImages();
 
             this.isLoading = false;
 
@@ -168,7 +167,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public filterImages() {
        
         this.images = this.filterDistance ? this.rawImages
-                .filter(img => img.distance < this.filterDistance)
+                .filter(img => img.distance == null || img.distance < this.filterDistance)
                 .sort((a, b) => { return a.distance > b.distance ? 1 : -1; }) : this.rawImages;
     }
 
@@ -210,7 +209,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                         imageUrl: imageUrl,
                         otherGcps: [],
                         coords: image.getCoords(),
-                        distance: 0
+                        distance: null
                     };
 
                     newImages.push(descr);
@@ -228,16 +227,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 var coord = coords[i];
                 var item = this.rawImages[i];
 
-                if (coord == null) {
-                    item.distance = Number.MAX_VALUE;
-                    continue;
-                }
-                item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
+                if (coord)
+                    item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
             }
 
-            this.images = this.rawImages
+            /*this.images = this.rawImages
                 .filter(img => img.distance < this.filterDistance)
-                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });
+                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });*/
+
+            this.filterImages();
 
             this.isLoading = false;
 

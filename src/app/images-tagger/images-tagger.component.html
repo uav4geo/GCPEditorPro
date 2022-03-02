@@ -18,9 +18,9 @@
     </div>
     <div class="col-md-auto">
         <div class="input-group">
-            <div class="input-group-prepend">
+            <div class="input-group-prepend" *ngIf="rawImages.length > 0">
                 <span class="input-group-text">{{images.length}} / {{rawImages.length}}</span>
-              </div>
+            </div>
             <input type="number" [(ngModel)]="filterDistance" step="1" placeholder="Distance in meters" min="0" class="form-control">
             <div class="input-group-append">
                 <button class="btn btn-primary" type="button" (click)="filterImages()">
@@ -42,7 +42,12 @@
         <div *ngFor="let desc of images" class="align-top d-inline-block text-center border"
             [ngClass]="{'w-33': images.length >= 3, 'w-50': images.length <= 2}">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
-                <h5 class="m-1">{{getName(desc)}}</h5>
+                <h5 class="m-1">{{getName(desc)}}
+                    <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="desc.distance == null">
+                        <fa-icon [styles]="{'color': '#2c3e50'}" icon="map-marker-alt"></fa-icon>  
+                        <fa-icon icon="slash"></fa-icon>
+                    </fa-layers>                                          
+                </h5>
                 <button type="button" class="close" aria-label="Close" (click)="remove(desc)">
                     <span aria-hidden="true">&times;</span>
                 </button>

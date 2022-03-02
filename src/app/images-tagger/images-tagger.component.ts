@@ -6,7 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
 import * as rfdc from 'rfdc';
 import * as proj4 from 'proj4';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { GcpsDetectorService } from '../gcps-detector.service';
 import { CoordsXY, CoordsXYZ, GPSCoords } from '../../shared/common';
@@ -24,7 +24,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public gcp: GCP;
     public gcpCoords: CoordsXYZ;
     public errors: string[] = [];
+
     public isLoading = false;
+    public loadingMessage = null;
+    public loadingProgress: number = 0;
 
     // We could save this on local storage, but it's not necessary
     public filterDistance: number = 10;
@@ -84,7 +87,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isLoading = true;
 
         this.gcp = matches[0];
 
@@ -95,6 +97,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             prj,
             proj4.default.WGS84,
             [this.gcp.northing, this.gcp.easting, this.gcp.elevation]);
+
+        if (this.storage.images.length === 0) 
+            return;
+
+        this.setProgress("Loading images...", 0);
 
         this.rawImages = this.storage.images.map(img => {
 
@@ -143,6 +150,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         });
 
+        this.setProgress('Calculating distances from GCP...', 0.5);
+
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
                 var coord = coords[i];
@@ -158,7 +167,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             this.filterImages();
 
-            this.isLoading = false;
+            this.setProgress("Done", 1, true);
 
         });
 
@@ -173,14 +182,20 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public handleImages(files: File[]) {
 
-        this.isLoading = true;
+        if (files.length == 0) return;
+        
+        this.setProgress("Loading images...");
 
         var newImages = [];
 
+        var count = 0;
+
         for (const file of files) { // for multiple files
-            (f => {
+            ((f, cnt) => {
                 const name = f.name;
                 const type = f.type;
+
+                this.setProgress(`Reading image ${name}`, cnt / files.length);
 
                 const url = (window.URL ? URL : webkitURL).createObjectURL(f);
                 const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
@@ -217,10 +232,13 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 } else {
                     res[0].imageUrl = imageUrl;
                 }
-            })(file);
+                
+            })(file, count++);
         }
 
         this.rawImages = this.rawImages.concat(newImages);
+
+        this.setProgress("Reading coordinates", 1);
 
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
@@ -237,10 +255,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             this.filterImages();
 
-            this.isLoading = false;
-
             // Notify smart images that pins might have to be refreshed
             window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
+
+            this.setProgress("Done", 1, true);
+
 
         });
 
@@ -285,6 +304,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         let internal_remove = () => {
             this.images = this.images.filter(item => item.image.imgName !== desc.image.imgName);
+            this.rawImages = this.rawImages.filter(item => item.image.imgName !== desc.image.imgName);
             this.storage.removeImage(desc.image.imgName);
 
             // Notify smart images that pins might have to be refreshed
@@ -345,25 +365,71 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public detect(desc: ImageDescriptor) {
 
-        this.isLoading = true;
+        this.setProgress("Detecting GCPs in " + desc.image.imgName);
 
         this.detector.detect(desc.image.imgName).then(coords => {
 
             if (coords != null) {
+
+                this.setProgress("GCP found", 1, true);
+
                 this.pin(coords, desc);
                 desc.pinLocation = coords;
+            } else {
+                this.setProgress("No GCP found", 1, true);
             }
-
-            this.isLoading = false;
 
         }, err => {
             console.log(err);
-            this.isLoading = false;
+            this.setProgress("Error: " + err, 1, true);
         });
     }
 
-    public detectImages() {
-        //
+    public async detectImages() {
+        
+        this.setProgress("Detecting GCPs in images");
+        
+        for (let i = 0; i < this.images.length; i++) {
+            let item = this.images[i];
+            let progress = i / this.images.length;
+            
+            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress);
+
+            const coords = await this.detector.detect(item.image.imgName);
+
+            if (coords != null) {
+
+                this.setProgress("GCP found", progress);
+
+                this.pin(coords, item);
+                item.pinLocation = coords;
+            } else {
+                this.setProgress("No GCP found", progress);
+            }
+            
+        }
+
+        this.setProgress("Done", 1, true);
+        
+    }
+
+    private setProgress(text: string, progress: number = 0, close: boolean = false) {
+
+        console.log(text, progress, close);
+        
+        setTimeout(() => {
+            this.isLoading = true;     
+            this.loadingProgress = progress;
+            this.loadingMessage = text;
+        }, 1);
+        
+        if (close) {
+            setTimeout(() => {
+                this.isLoading = false;
+                this.loadingProgress = 0;
+                this.loadingMessage = null;
+            }, 500);
+        }
     }
 
 }

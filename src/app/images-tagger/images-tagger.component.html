@@ -23,6 +23,11 @@
             </div>
             <input type="number" [(ngModel)]="filterDistance" step="1" placeholder="Distance in meters" min="0" class="form-control">
             <div class="input-group-append">
+                <button class="btn btn-danger" type="button" (click)="filterDistance = null; filterImages();">
+                    X
+                </button>
+            </div>
+            <div class="input-group-append">
                 <button class="btn btn-primary" type="button" (click)="filterImages()">
                     <fa-icon icon="filter" class="mr-2"></fa-icon>
                     Filter (meters)
@@ -31,7 +36,7 @@
         </div>
     </div>
     <div class="col-md-auto">
-        <button class="btn btn-info" type="button">
+        <button class="btn btn-info" type="button" (click)="detectImages()">
             <fa-icon icon="search" class="mr-2"></fa-icon>
             Detect GCPs
         </button>
@@ -72,5 +77,14 @@
     </button>
 </div>
 <div class="loader" *ngIf="isLoading">
-    <fa-icon icon="cog" class="fa-spin"></fa-icon>
+    <div class="loader-content rounded shadow p-4">
+        <div class="text-center">
+            <fa-icon icon="cog" [spin]="true" size="2x"></fa-icon>
+        </div>
+        <div class="my-2 text-center">
+            {{loadingMessage}}
+        </div>
+        <div class="mb-2 text-center">{{loadingProgress | percent:'2.2-2'}}</div>
+        <!--<div><ngb-progressbar type="dark" textType="white" [value]="loadingProgress" [showValue]="true"></ngb-progressbar></div>-->
+    </div>
 </div>

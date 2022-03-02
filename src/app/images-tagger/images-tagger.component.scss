@@ -38,6 +38,11 @@ input {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: xx-large;
+    font-size: x-large;
     z-index: 1031;
+    .loader-content {
+        width: auto;
+        min-width: 300px;
+        background-color: white;
+    }
 }

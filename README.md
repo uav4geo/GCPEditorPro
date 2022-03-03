@@ -9,6 +9,7 @@ Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](htt
 - Import GPS measurements from CSV
 - Easy/fast image selection
 - Create GCPs from scratch by clicking on a map
+- Detect GCPs in the images (checkerboard pattern)
 - Custom basemap selector
 - Geocoder
 - Import existing GCP Files
@@ -55,6 +56,25 @@ But note that you'll need to modify the storage service (around https://github.c
 Results will be stored in the `dist/` folder.
 
 You can run `npm run stats` to analyze production bundle size
+
+## Improving on GCPs detection
+GCP detection is performed using OpenCV.js with a HAAR cascade classifier ([docs](https://docs.opencv.org/3.4/db/d28/tutorial_cascade_classifier.html), [tutorial](https://medium.com/analytics-vidhya/haar-cascades-explained-38210e57970d), [tutorial](https://stackabuse.com/object-detection-with-opencv-python-using-a-haar-cascade-classifier/), [examples](https://github.com/opencv/opencv/tree/master/data/haarcascades)). The classifier was trained on a small to medium sized dataset of aerial images ([datasets](https://www.opendronemap.org/odm/datasets/)). 
+
+You can use https://amin-ahmadi.com/cascade-trainer-gui/ to train a new classifier or follow [these instructions](https://docs.opencv.org/4.x/dc/d88/tutorial_traincascade.html) to train a new classifier by hand.
+
+The current classifier was trained on:
+ - 1391 negatives 
+ - 86 positives
+
+With these parameters:
+ - 20 stages
+ - 0.995 minimal hit rate
+ - 0.500 maximal false alarm rate
+ - 0.95 weight trim rate
+ - 1.00 maximal depth weak tree
+ - 100 maximal weak trees
+
+The classifiers folder is `src/assets/opencv/data/haarcascades`. GCPEditorPro supports the use of multiple classifiers applied sequentially. In order to add a new classifier, you need to add the new xml file to the classifiers folder and add the new classifier name to the `classifiers` array in the `src/app/gcps-detector.service.ts` file.
 
 ## Contributing
 

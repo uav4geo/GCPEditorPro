@@ -27,6 +27,7 @@ export class GcpsDetectorService {
 
     private areClassifiersLoaded: boolean;
 
+    // *** Add here more classifiers ***
     private classifiers = [
         "gcp-square-base.xml"  
     ];

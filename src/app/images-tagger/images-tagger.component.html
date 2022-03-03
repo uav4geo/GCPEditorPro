@@ -79,7 +79,7 @@
 <div class="loader" *ngIf="isLoading">
     <div class="loader-content rounded shadow p-4">
         <!-- close icon -->
-        <div class="close-icon">
+        <div class="close-icon" *ngIf="allowProgressClose">
             <fa-icon icon="times" class="text-danger" (click)="interrupt()"></fa-icon>
         </div>
         <div class="text-center">
@@ -89,6 +89,5 @@
             {{loadingMessage}}
         </div>
         <div class="mb-2 text-center">{{loadingProgress | percent:'2.2-2'}}</div>
-        <!--<div><ngb-progressbar type="dark" textType="white" [value]="loadingProgress" [showValue]="true"></ngb-progressbar></div>-->
     </div>
 </div>

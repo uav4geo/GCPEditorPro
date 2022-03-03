@@ -28,6 +28,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public isLoading = false;
     public loadingMessage = null;
     public loadingProgress: number = 0;
+    public allowProgressClose: boolean = false;
 
     // We could save this on local storage, but it's not necessary
     public filterDistance: number = 10;
@@ -90,13 +91,16 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.gcp = matches[0];
 
+        console.log("Using projection: ", this.storage.projection);
         const prj = proj4.default.Proj(this.storage.projection.eq);
 
         // We need this to be able to calculate the distance
         this.gcpCoords = proj4.default.transform(
             prj,
             proj4.default.WGS84,
-            [this.gcp.northing, this.gcp.easting, this.gcp.elevation]);
+            [this.gcp.easting, this.gcp.northing, this.gcp.elevation]);
+
+        console.log("GCP coords: ", this.gcpCoords);
 
         if (this.storage.images.length === 0)
             return;
@@ -157,12 +161,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 var coord = coords[i];
                 var item = this.rawImages[i];
 
-                /*if (coord == null) {
-                    item.distance = null;
-                    continue;
-                }*/
-                if (coord)
+                if (coord) {
                     item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
+                    console.log(item.image.imgName, coord, "Distance: " + item.distance);
+                }
             }
 
             this.filterImages();
@@ -245,13 +247,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 var coord = coords[i];
                 var item = this.rawImages[i];
 
-                if (coord)
+                if (coord) {
                     item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
+                    console.log(item.image.imgName, coord, "Distance: " + item.distance);
+                }
             }
-
-            /*this.images = this.rawImages
-                .filter(img => img.distance < this.filterDistance)
-                .sort((a, b) => { return a.distance > b.distance ? 1 : -1; });*/
 
             this.filterImages();
 
@@ -387,7 +387,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public async detectImages() {
 
-        this.setProgress("Detecting GCPs in images");
+        this.setProgress("Detecting GCPs in images", 0, false, true);
 
         for (let i = 0; i < this.images.length; i++) {
 
@@ -396,12 +396,12 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             if (this.requestedInterrupt) {
                 console.warn("Received interrupt signal");
-                this.setProgress("Interrupted", progress, true);
+                this.setProgress("Interrupted", progress, true, false);
                 this.requestedInterrupt = false;
                 return;
             }
 
-            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress);
+            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress, false, true);
             const coords = await this.detector.detect(item.image.imgName);
 
             if (coords != null) {
@@ -425,15 +425,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public interrupt() {
         this.requestedInterrupt = true;
         this.loadingMessage = "Interrupting...";
+        this.allowProgressClose = false;
     }
 
-    private setProgress(text: string, progress: number = 0, close: boolean = false) {
+    private setProgress(text: string, progress: number = 0, close: boolean = false, allowClose: boolean = false) {
 
         console.log(text, progress, close);
 
-        this.isLoading = true;
+        this.allowProgressClose = allowClose;
         this.loadingProgress = progress;
         this.loadingMessage = text;
+        this.isLoading = true;
 
         if (close) {
             setTimeout(() => {

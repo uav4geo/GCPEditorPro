@@ -88,6 +88,9 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             return;
         }
 
+        debugger;
+        
+        this.images = [];
 
         this.gcp = matches[0];
 
@@ -107,13 +110,21 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.setProgress("Loading images...", 0);
 
+        let cnt = this.storage.images.length;
+        let prog = 0;
+
         this.rawImages = this.storage.images.map(img => {
 
             const gcps = this.storage.imageGcps.filter(imgGcp => imgGcp.imgName === img.name);
             const res = gcps.find(item => item.gcpName === gcpName);
 
+            let obj = null;
+
             if (res !== undefined) {
-                return {
+
+                var coord = img.getCoords();
+
+                obj = {
                     image: {
                         gcpName: this.gcp.name,
                         geoX: this.gcp.easting,
@@ -128,11 +139,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     pinLocation: { x: res.imX, y: res.imY },
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
-                    coords: img.getCoords(),
+                    coords: coord,
                     distance: null
                 };
             } else {
-                return {
+                obj = {
                     image: {
                         gcpName: this.gcp.name,
                         geoX: this.gcp.easting,
@@ -147,11 +158,22 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     pinLocation: null,
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
-                    coords: img.getCoords(),
+                    coords: coord,
                     distance: null
                 };
             }
 
+            this.setProgress("Loading images...", prog++ / cnt);
+
+            return obj;
+
+        });
+
+        this.rawImages.forEach((item, i) => {
+            if (item.coords)
+                item.coords.then(coords => {
+                    this.setProgress("Reading coordinates of " + item.image.imgName, i / this.rawImages.length * 0.50 + 0.50);
+                });
         });
 
         this.setProgress('Calculating distances from GCP...', 0.5);
@@ -179,9 +201,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.images = this.filterDistance ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)
-            .sort((a, b) => { 
-                return (a.distance && b.distance) ? (a.distance > b.distance ? 1 : -1) : 
-                        a.image.imgName.localeCompare(b.image.imgName); }) : this.rawImages;
+            .sort((a, b) => {
+                return (a.distance && b.distance) ? (a.distance > b.distance ? 1 : -1) :
+                    a.image.imgName.localeCompare(b.image.imgName);
+            }) : this.rawImages;
     }
 
     public handleImages(files: File[]) {
@@ -192,57 +215,63 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         var newImages = [];
 
-        var count = 0;
+        for (let i = 0; i < files.length; i++) {
 
-        for (const file of files) { // for multiple files
-            ((f, cnt) => {
-                const name = f.name;
-                const type = f.type;
+            let file = files[i];
 
-                this.setProgress(`Reading image ${name}`, cnt / files.length * 0.75);
+            const name = file.name;
+            const type = file.type;
 
-                const url = (window.URL ? URL : webkitURL).createObjectURL(f);
-                const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+            this.setProgress(`Reading image ${name}`, i / files.length * 0.50);
+            
+            const url = (window.URL ? URL : webkitURL).createObjectURL(file);
+            const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
 
-                // Save image
-                const image = this.storage.saveImageRaw(f, url);
+            // Save image
+            const image = this.storage.saveImageRaw(file, url);
 
-                const res = this.images.filter(item => item.image.imgName === name);
+            const res = this.images.filter(item => item.image.imgName === name);
 
-                // If the image is not present, we add it with the GCP coordinates
-                if (res.length === 0) {
+            // If the image is not present, we add it with the GCP coordinates
+            if (res.length === 0) {
 
-                    const descr: ImageDescriptor = {
-                        image: {
-                            gcpName: this.gcp.name,
-                            geoX: this.gcp.easting,
-                            geoY: this.gcp.northing,
-                            geoZ: this.gcp.elevation,
-                            imX: 0,
-                            imY: 0,
-                            imgName: name,
-                            extras: []
-                        },
-                        isTagged: false,
-                        pinLocation: null,
-                        imageUrl: imageUrl,
-                        otherGcps: [],
-                        coords: image.getCoords(),
-                        distance: null
-                    };
+                let coord = image.getCoords();
+                
+                const descr: ImageDescriptor = {
+                    image: {
+                        gcpName: this.gcp.name,
+                        geoX: this.gcp.easting,
+                        geoY: this.gcp.northing,
+                        geoZ: this.gcp.elevation,
+                        imX: 0,
+                        imY: 0,
+                        imgName: name,
+                        extras: []
+                    },
+                    isTagged: false,
+                    pinLocation: null,
+                    imageUrl: imageUrl,
+                    otherGcps: [],
+                    coords: coord,
+                    distance: null
+                };
 
-                    newImages.push(descr);
-                    // Otherwise we add the loaded data to the array
-                } else {
-                    res[0].imageUrl = imageUrl;
-                }
+                newImages.push(descr);
+                // Otherwise we add the loaded data to the array
+            } else {
+                res[0].imageUrl = imageUrl;
+            }
 
-            })(file, count++);
         }
 
         this.rawImages = this.rawImages.concat(newImages);
 
-        this.setProgress("Reading coordinates...", 0.75);
+        this.rawImages.forEach((item, i) => {
+            if (item.coords)
+                item.coords.then(coords => {
+                    this.setProgress("Reading coordinates of " + item.image.imgName, i / this.rawImages.length * 0.50 + 0.50);
+                });
+        });
 
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
@@ -431,12 +460,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     private setProgress(text: string, progress: number = 0, close: boolean = false, allowClose: boolean = false) {
 
-        console.log(text, progress, close);
+        
+        setTimeout(() => {
+            this.allowProgressClose = allowClose;
+            this.loadingProgress = progress;
+            this.loadingMessage = text;
+            this.isLoading = true;
+            this.appRef.tick();
+        }, 1);
 
-        this.allowProgressClose = allowClose;
-        this.loadingProgress = progress;
-        this.loadingMessage = text;
-        this.isLoading = true;
 
         if (close) {
             setTimeout(() => {

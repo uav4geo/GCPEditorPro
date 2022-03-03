@@ -179,7 +179,9 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.images = this.filterDistance ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)
-            .sort((a, b) => { return a.distance > b.distance ? 1 : -1; }) : this.rawImages;
+            .sort((a, b) => { 
+                return (a.distance && b.distance) ? (a.distance > b.distance ? 1 : -1) : 
+                        a.image.imgName.localeCompare(b.image.imgName); }) : this.rawImages;
     }
 
     public handleImages(files: File[]) {

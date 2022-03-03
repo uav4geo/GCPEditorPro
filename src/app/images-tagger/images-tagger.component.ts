@@ -197,7 +197,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 const name = f.name;
                 const type = f.type;
 
-                this.setProgress(`Reading image ${name}`, cnt / files.length);
+                this.setProgress(`Reading image ${name}`, cnt / files.length * 0.75);
 
                 const url = (window.URL ? URL : webkitURL).createObjectURL(f);
                 const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
@@ -240,7 +240,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.rawImages = this.rawImages.concat(newImages);
 
-        this.setProgress("Reading coordinates", 1);
+        this.setProgress("Reading coordinates...", 0.75);
 
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
@@ -259,7 +259,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
 
             this.setProgress("Done", 1, true);
-
 
         });
 

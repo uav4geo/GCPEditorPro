@@ -10,6 +10,7 @@ Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](htt
 - Easy/fast image selection
 - Create GCPs from scratch by clicking on a map
 - Detect GCPs in the images (checkerboard pattern)
+- Filter and sort images by distance from the GCP
 - Custom basemap selector
 - Geocoder
 - Import existing GCP Files

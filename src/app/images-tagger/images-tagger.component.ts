@@ -65,6 +65,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     ngAfterViewInit(): void {
+
         this.handleDrop = e => {
             this.handleImages(e.detail.files);
         };
@@ -73,6 +74,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
 
     ngOnInit(): void {
+
         const gcpName = this.route.snapshot.paramMap.get('gcp');
 
         if (typeof gcpName === 'undefined' || gcpName === null) {
@@ -87,9 +89,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.router.navigateByUrl('/');
             return;
         }
-
-        debugger;
-        
+    
         this.images = [];
 
         this.gcp = matches[0];
@@ -120,10 +120,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             let obj = null;
 
-            if (res !== undefined) {
+            var coord = img.getCoords();
 
-                var coord = img.getCoords();
-
+            if (res) {
+                
                 obj = {
                     image: {
                         gcpName: this.gcp.name,
@@ -198,6 +198,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     }
 
     public filterImages() {
+
+        console.log("Filtering images with " + this.filterDistance + "m distance");
 
         this.images = this.filterDistance ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)

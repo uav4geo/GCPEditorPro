@@ -36,6 +36,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public images: ImageDescriptor[] = [];
     public rawImages: ImageDescriptor[] = [];
 
+    public page: number = 1;
+
+    // This page size is a "safe" number, we could use a bigger one but we risk to nuke the browser
+    public pageSize: number = 10;
+
     @ViewChild('dnd') dnd: ElementRef;
     private handleDrop = null;
 
@@ -200,6 +205,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public filterImages() {
 
         console.log("Filtering images with " + this.filterDistance + "m distance");
+
+        this.page = 1;
 
         this.images = this.filterDistance ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)

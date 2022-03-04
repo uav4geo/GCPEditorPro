@@ -44,7 +44,7 @@
 </div>
 <div class="row mt-2">
     <div class="col" *ngIf="images !== null">
-        <div *ngFor="let desc of images" class="align-top d-inline-block text-center border"
+        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border"
             [ngClass]="{'w-33': images.length >= 3, 'w-50': images.length <= 2}">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
                 <h5 class="m-1">{{getName(desc)}}
@@ -68,11 +68,12 @@
         </div>
     </div>
 </div>
-<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">
-    <button class="btn btn-primary ml-3 my-3" (click)="back()">
+<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center py-3">
+    <button class="btn btn-primary ml-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
     </button>
-    <button class="btn btn-primary mr-3 my-3" (click)="ok()">Save Changes
+    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [(page)]="page" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
+    <button class="btn btn-primary mr-3" (click)="ok()">Save Changes
         <fa-icon icon="save" class="ml-2"></fa-icon>
     </button>
 </div>

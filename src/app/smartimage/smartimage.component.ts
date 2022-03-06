@@ -147,6 +147,12 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
 
         this.pinDiv.nativeElement.style.left = (location.x - this.pinDiv.nativeElement.width / 2) + 'px';
         this.pinDiv.nativeElement.style.top = (location.y - this.pinDiv.nativeElement.height / 2) + 'px';
+        this.pinDiv.nativeElement.style.display = 'block';
+    }
+
+    public clearPin(){
+        this.pinLocation = null;
+        this.pinDiv.nativeElement.style.display = 'none';
     }
 
     private getPinLocation(): CoordsXY {

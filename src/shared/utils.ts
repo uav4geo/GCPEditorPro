@@ -55,9 +55,9 @@ export function base64ArrayBuffer(arrayBuffer) {
 
 export function toHumanDistance(distanceInM: number) {
     if (distanceInM < 1000) {
-        return distanceInM.toFixed(2) + ' m';
+        return distanceInM.toFixed(0) + ' m';
     } else {
-        return (distanceInM / 1000).toFixed(2) + ' km';
+        return (distanceInM / 1000).toFixed(0) + ' km';
     }
 }
 

@@ -83,11 +83,11 @@ export class GcpsDetectorService {
 
                     let res = null;
 
-                    console.log('loaded image with size: ', img.size());
+                    // console.log('loaded image with size: ', img.size());
 
                     for (let i = 0; i < this.classifiers.length; i++) {
 
-                        console.log("detecting with classifier: ", this.classifiers[i]);
+                        // console.log("detecting with classifier: ", this.classifiers[i]);
 
                         const classifier = new cv.CascadeClassifier();
                         classifier.load(this.classifiers[i]);
@@ -102,7 +102,7 @@ export class GcpsDetectorService {
 
                             res = { x: rect.x + (rect.width / 2), y: rect.y + (rect.height / 2) };
 
-                            console.log("Found GCP at ", res);
+                            // console.log("Found GCP at ", res);
 
                             rects.delete();
                             classifier.delete();
@@ -110,7 +110,7 @@ export class GcpsDetectorService {
                             break;
 
                         } else
-                            console.log("No GCP found");
+                            // console.log("No GCP found");
 
                         rects.delete();
                         classifier.delete();

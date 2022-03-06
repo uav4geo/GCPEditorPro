@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef, ViewChildren, QueryList } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
@@ -11,6 +11,8 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { GcpsDetectorService } from '../gcps-detector.service';
 import { CoordsXY, CoordsXYZ, GPSCoords } from '../../shared/common';
 import { getDistanceFromLatLonInM, toHumanDistance } from 'src/shared/utils';
+import { ThrowStmt } from '@angular/compiler';
+import { SmartimageComponent } from '../smartimage/smartimage.component';
 
 const clone = rfdc();
 
@@ -30,8 +32,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public loadingProgress: number = 0;
     public allowProgressClose: boolean = false;
 
-    // We could save this on local storage, but it's not necessary
-    public filterDistance: number = 10;
+    public filterDistance: number = 0;
+    public filterByDistance: boolean = true;
+
+    public showFilterSettings: boolean = false;
 
     public images: ImageDescriptor[] = [];
     public rawImages: ImageDescriptor[] = [];
@@ -45,6 +49,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     private handleDrop = null;
 
     @ViewChild('imagesUpload') imagesUpload: ElementRef;
+    @ViewChildren('smartImage') smartImages:QueryList<SmartimageComponent>;
 
     constructor(private router: Router,
         private route: ActivatedRoute,
@@ -63,6 +68,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             router.navigateByUrl('/');
             return;
         }
+
+        this.filterDistance = localStorage.getItem("filterDistance") !== null ? 
+                                (parseFloat(localStorage.getItem("filterDistance")) || 30) : 
+                                30;
     }
 
     ngOnDestroy(): void {
@@ -99,7 +108,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.gcp = matches[0];
 
-        console.log("Using projection: ", this.storage.projection);
+        // console.log("Using projection: ", this.storage.projection);
         const prj = proj4.default.Proj(this.storage.projection.eq);
 
         // We need this to be able to calculate the distance
@@ -108,15 +117,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             proj4.default.WGS84,
             [this.gcp.easting, this.gcp.northing, this.gcp.elevation]);
 
-        console.log("GCP coords: ", this.gcpCoords);
+        // console.log("GCP coords: ", this.gcpCoords);
 
         if (this.storage.images.length === 0)
             return;
-
-        this.setProgress("Loading images...", 0);
-
-        let cnt = this.storage.images.length;
-        let prog = 0;
 
         this.rawImages = this.storage.images.map(img => {
 
@@ -168,20 +172,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 };
             }
 
-            this.setProgress("Loading images...", prog++ / cnt);
-
             return obj;
 
         });
 
-        this.rawImages.forEach((item, i) => {
-            if (item.coords)
-                item.coords.then(coords => {
-                    this.setProgress("Reading coordinates of " + item.image.imgName, i / this.rawImages.length * 0.50 + 0.50);
-                });
-        });
-
-        this.setProgress('Calculating distances from GCP...', 0.5);
+        this.loadImages(0);
 
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
@@ -190,7 +185,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
                 if (coord) {
                     item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
-                    console.log(item.image.imgName, coord, "Distance: " + item.distance);
+                    // console.log(item.image.imgName, coord, "Distance: " + item.distance);
                 }
             }
 
@@ -202,25 +197,61 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     }
 
+    public toggleFilterByDistance(){
+        this.filterByDistance = !this.filterByDistance;
+        this.filterImages();
+    }
+
     public filterImages() {
 
-        console.log("Filtering images with " + this.filterDistance + "m distance");
-
+        // console.log("Filtering images with " + this.filterDistance + "m distance");
+        
         this.page = 1;
 
-        this.images = this.filterDistance ? this.rawImages
+        this.images = (this.filterByDistance && this.filterDistance) ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)
             .sort((a, b) => {
-                return (a.distance && b.distance) ? (a.distance > b.distance ? 1 : -1) :
-                    a.image.imgName.localeCompare(b.image.imgName);
-            }) : this.rawImages;
+                if ((!a.isTagged && !b.isTagged) || (a.isTagged && b.isTagged)){
+                    if (a.distance !== null && b.distance !== null){
+                        return a.distance > b.distance ? 1 : -1
+                    }else{
+                        return a.image.imgName.localeCompare(b.image.imgName);
+                    }
+                }else if (!a.isTagged && b.isTagged){
+                    return 1;
+                }else{
+                    return -1;
+                }
+            }) : this.rawImages.sort((a, b) => {
+                if ((!a.isTagged && !b.isTagged) || (a.isTagged && b.isTagged)) return a.image.imgName.localeCompare(b.image.imgName);
+                else if (!a.isTagged && b.isTagged) return 1;
+                else return -1;
+            });
+
+        if (this.filterByDistance && this.filterDistance){
+            localStorage.setItem("filterDistance", this.filterDistance.toString());
+        }
+    }
+
+    public toggleFilterSettings(){
+        this.showFilterSettings = !this.showFilterSettings;
+    }
+
+    private loadImages(i: number){
+        if (!this.rawImages[i]) return;
+        
+        const item = this.rawImages[i];
+
+        this.setProgress("Loading " + item.image.imgName, i / this.rawImages.length);
+
+        if (item.coords){
+            item.coords.then(_ => this.loadImages(i + 1));
+        }else this.loadImages(i + 1);
     }
 
     public handleImages(files: File[]) {
 
         if (files.length == 0) return;
-
-        this.setProgress("Loading images...");
 
         var newImages = [];
 
@@ -231,8 +262,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             const name = file.name;
             const type = file.type;
 
-            this.setProgress(`Reading image ${name}`, i / files.length * 0.50);
-            
             const url = (window.URL ? URL : webkitURL).createObjectURL(file);
             const imageUrl = url !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
 
@@ -275,12 +304,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.rawImages = this.rawImages.concat(newImages);
 
-        this.rawImages.forEach((item, i) => {
-            if (item.coords)
-                item.coords.then(coords => {
-                    this.setProgress("Reading coordinates of " + item.image.imgName, i / this.rawImages.length * 0.50 + 0.50);
-                });
-        });
+        this.loadImages(0);
 
         Promise.all(this.rawImages.map(item => item.coords)).then(coords => {
             for (let i = 0; i < coords.length; i++) {
@@ -289,7 +313,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
                 if (coord) {
                     item.distance = getDistanceFromLatLonInM(this.gcpCoords.y, this.gcpCoords.x, coord.lat, coord.lng);
-                    console.log(item.image.imgName, coord, "Distance: " + item.distance);
+                    // console.log(item.image.imgName, coord, "Distance: " + item.distance);
                 }
             }
 
@@ -339,6 +363,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         desc.image.imY = location.y;
     }
 
+    public unpin(desc: ImageDescriptor): void{
+        desc.isTagged = false;
+        desc.image.imX = desc.image.imY = 0;
+        desc.pinLocation = null;
+        
+        const si = this.smartImages.find(si => si.src === desc.imageUrl);
+        if (si) si.clearPin();
+        
+        // TODO: add distance filter settings
+    }
+
     public remove(desc: ImageDescriptor) {
 
         let internal_remove = () => {
@@ -351,15 +386,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         };
 
         if (desc.otherGcps.length > 0) {
-
-            const modalRef = this.modalService.open(ConfirmDialogComponent, { ariaLabelledBy: 'modal-basic-title' });
-
-            modalRef.componentInstance.title = "Remove image";
-            modalRef.componentInstance.text = "This image is associated with other GCPs. Do you want to remove it from the list?";
-            modalRef.result.then((result) => {
-                if (result === 'yes') internal_remove();
-            });
-
+            if (desc.isTagged){
+                this.unpin(desc);
+            }else{
+                const modalRef = this.modalService.open(ConfirmDialogComponent, { ariaLabelledBy: 'modal-basic-title' });
+    
+                modalRef.componentInstance.title = "Remove Image";
+                modalRef.componentInstance.text = "This image is associated with other GCPs. Do you want to remove it anyway?";
+                modalRef.result.then((result) => {
+                    if (result === 'yes') internal_remove();
+                });
+            }
         } else {
             internal_remove();
         }
@@ -374,11 +411,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             if (desc.isTagged) {
                 cls = 'badge-success';
             } else {
-                if (desc.otherGcps.length !== 0) {
-                    cls = 'badge-primary';
-                } else {
-                    cls = 'badge-info';
-                }
+                // if (desc.otherGcps.length !== 0) {
+                cls = 'badge-info';
             }
         } else {
             cls = 'badge-warning';
@@ -393,10 +427,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         let name = desc.image.imgName;
 
-        if (desc.otherGcps.length !== 0)
-            name = name + ' (' + desc.otherGcps.join(', ') + ')';
+        // if (desc.otherGcps.length !== 0)
+        //     name = name + ' (' + desc.otherGcps.join(', ') + ')';
 
-        if (desc.distance)
+        if (desc.distance && this.filterByDistance)
             name = name + ' (' + toHumanDistance(desc.distance) + ')';
 
         return name;
@@ -404,7 +438,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public detect(desc: ImageDescriptor) {
 
-        this.setProgress("Detecting GCPs in " + desc.image.imgName);
+        this.setProgress("Detecting GCP in " + desc.image.imgName);
 
         this.detector.detect(desc.image.imgName).then(coords => {
 
@@ -431,6 +465,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         for (let i = 0; i < this.images.length; i++) {
 
             let item = this.images[i];
+            if (item.isTagged) continue;
+
             let progress = i / this.images.length;
 
             if (this.requestedInterrupt) {
@@ -440,7 +476,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            this.setProgress("Detecting GCPs in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress, false, true);
+            this.setProgress("Detecting GCP in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress, false, true);
             const coords = await this.detector.detect(item.image.imgName);
 
             if (coords != null) {
@@ -484,7 +520,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 this.isLoading = false;
                 this.loadingProgress = 0;
                 this.loadingMessage = null;
-            }, 500);
+            }, 250);
         }
     }
 

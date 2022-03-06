@@ -9,8 +9,8 @@ Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](htt
 - Import GPS measurements from CSV
 - Easy/fast image selection
 - Create GCPs from scratch by clicking on a map
-- Detect GCPs in the images (checkerboard pattern)
-- Filter and sort images by distance from the GCP
+- Filter and sort images by distance from GCPs
+- Automatically detect GCPs in images (experimental, checkerboard patterns only)
 - Custom basemap selector
 - Geocoder
 - Import existing GCP Files
@@ -59,6 +59,7 @@ Results will be stored in the `dist/` folder.
 You can run `npm run stats` to analyze production bundle size
 
 ## Improving on GCPs detection
+
 GCP detection is performed using OpenCV.js with a HAAR cascade classifier ([docs](https://docs.opencv.org/3.4/db/d28/tutorial_cascade_classifier.html), [tutorial](https://medium.com/analytics-vidhya/haar-cascades-explained-38210e57970d), [tutorial](https://stackabuse.com/object-detection-with-opencv-python-using-a-haar-cascade-classifier/), [examples](https://github.com/opencv/opencv/tree/master/data/haarcascades)). The classifier was trained on a small to medium sized dataset of aerial images ([datasets](https://www.opendronemap.org/odm/datasets/)). 
 
 You can use https://amin-ahmadi.com/cascade-trainer-gui/ to train a new classifier or follow [these instructions](https://docs.opencv.org/4.x/dc/d88/tutorial_traincascade.html) to train a new classifier by hand.

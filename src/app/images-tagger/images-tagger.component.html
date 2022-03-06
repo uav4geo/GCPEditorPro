@@ -1,43 +1,33 @@
-<div class="row">
-    <div class="col">
-        <div class="alert alert-info">
-            <fa-icon icon="info-circle" class="mr-3"></fa-icon>Select or drag &amp; drop images where {{gcp.name}} is
-            visible, then click it in each image or use the automatic detection button.
-        </div>
-    </div>
-</div>
 <div class="form-row mt-2">
     <div class="col">
         <div class="custom-file">
             <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)"
                 accept="image/*" multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
-                Select images
+                Select some images, then click on GCP "{{gcp.name}}" in each image.
             </label>
         </div>
     </div>
     <div class="col-md-auto">
         <div class="input-group">
-            <div class="input-group-prepend" *ngIf="rawImages.length > 0">
-                <span class="input-group-text">{{images.length}} / {{rawImages.length}}</span>
-            </div>
-            <input type="number" [(ngModel)]="filterDistance" step="1" placeholder="Distance in meters" min="0" class="form-control">
             <div class="input-group-append">
-                <button class="btn btn-danger" type="button" (click)="filterDistance = null; filterImages();">
-                    X
+                <button title='Show only images that are within {{filterDistance}} meters of GCP "{{gcp.name}}"' class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterByDistance()">
+                    <fa-icon *ngIf="filterByDistance" icon="toggle-on" class="mr-2"></fa-icon>
+                    <fa-icon *ngIf="!filterByDistance" icon="toggle-off" class="mr-2"></fa-icon>
+                    Filter By Distance
                 </button>
             </div>
             <div class="input-group-append">
-                <button class="btn btn-primary" type="button" (click)="filterImages()">
-                    <fa-icon icon="filter" class="mr-2"></fa-icon>
-                    Filter (meters)
+                <button class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterSettings()">
+                    <fa-icon *ngIf="!showFilterSettings" icon="caret-down"></fa-icon>
+                    <fa-icon *ngIf="showFilterSettings" icon="caret-up"></fa-icon>
                 </button>
             </div>
         </div>
     </div>
     <div class="col-md-auto">
-        <button class="btn btn-info" type="button" (click)="detectImages()">
-            <fa-icon icon="search" class="mr-2"></fa-icon>
+        <button title="Attempt to detect GCPs automatically (experimental)" [disabled]="images === null || images.length === 0 ? true : null" class="btn btn-info" type="button" (click)="detectImages()">
+            <fa-icon icon="search-location" class="mr-2"></fa-icon>
             Detect GCPs
         </button>
     </div>
@@ -48,23 +38,27 @@
             [ngClass]="{'w-33': images.length >= 3, 'w-50': images.length <= 2}">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
                 <h5 class="m-1">{{getName(desc)}}
-                    <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="desc.distance == null">
+                    <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="filterByDistance && desc.distance == null" title="This image has no EXIF location data">
                         <fa-icon [styles]="{'color': '#2c3e50'}" icon="map-marker-alt"></fa-icon>  
                         <fa-icon icon="slash"></fa-icon>
-                    </fa-layers>                                          
+                    </fa-layers>
                 </h5>
-                <button type="button" class="close" aria-label="Close" (click)="remove(desc)">
+                
+                <button [title]="(desc.isTagged && desc.otherGcps.length > 0) ? 'Untag GCP' : 'Remove Image'" type="button" class="close" aria-label="Close" (click)="remove(desc)">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <a class="find" (click)="detect(desc)">
+                <a class="find" (click)="detect(desc)" title="Detect GCP">
                     <div class="d-flex align-items-center h-100">
                         <fa-icon icon="search"></fa-icon>
                     </div>
                 </a>
             </span>
-            <app-smartimage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
+            <app-smartimage #smartImage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
                 (pin)="pin($event, desc)">
             </app-smartimage>
+        </div>
+        <div class="alert alert-info mt-2" *ngIf="!isLoading && filterByDistance && rawImages.length > 0 && images.length === 0">
+            <fa-icon icon="info-circle" class="mr-3"></fa-icon> No images seem to be within {{filterDistance}} meters of GCP "{{gcp.name}}", try turning off the distance filter or increase the distance radius.
         </div>
     </div>
 </div>

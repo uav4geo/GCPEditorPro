@@ -2,8 +2,9 @@ import { Injectable, isDevMode } from '@angular/core';
 import { GCPsDescriptor, TxtDescriptor, GCP, ImageGcp, Projection, ElevationMeasureUnit } from './gcps-utils.service';
 import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
-import * as exif from 'node_modules/exif-js/exif.js';
-import * as EXIF from 'node_modules/exif-js/exif.js';
+// import * as exif from 'node_modules/exif-js/exif.js';
+// import * as EXIF from 'node_modules/exif-js/exif.js';
+import exifr from 'exifr'
 import { GPSCoords } from '../shared/common';
 
 @Injectable({
@@ -93,48 +94,25 @@ class ImageInfo {
 
     public getCoords() : Promise<GPSCoords> {
 
-        if (this._coords)             
+        if (this._coords)
             return Promise.resolve(this._coords);
         
-        const prom = new Promise<GPSCoords>((resolve, reject) => {  
-
-            this.getExif(this._file, ex => {
-
-                this._coords = null;
-
-                if (!ex) {                    
-                    resolve(null);
-                    return;
-                }
-                
-                if (ex.GPSLatitude && ex.GPSLongitude) {
-
-                    let lat = ex.GPSLatitude[0] + ex.GPSLatitude[1] / 60 + ex.GPSLatitude[2] / 3600;
-                    let lng = ex.GPSLongitude[0] + ex.GPSLongitude[1] / 60 + ex.GPSLongitude[2] / 3600;
-                    
-                    this._coords = {
-                        lat: ex.GPSLatitudeRef == 'N' ? lat : -lat,
-                        lng: ex.GPSLongitudeRef == 'E' ? lng : -lng,
-                        alt: ex.GPSAltitude,
-                    };                    
-                }
-
+        const prom = new Promise<GPSCoords>(async (resolve, reject) => {
+            try{
+                let {latitude, longitude } = await exifr.gps(this.url);
+                this._coords = {
+                    lat: latitude,
+                    lng: longitude,
+                    alt: 0
+                }; 
                 resolve(this._coords);
-            });
-
+            }catch(e){
+                resolve(null);
+            }
         });
 
         return prom;
         
-    }
-
-    private getExif(file: File, callback: (exif: any) => void) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const ex = EXIF.readFromBinaryFile(e.target.result);
-            callback(ex);
-        };
-        reader.readAsArrayBuffer(file);
     }
 }
 

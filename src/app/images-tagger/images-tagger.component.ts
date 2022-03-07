@@ -219,7 +219,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         
         this.page = 1;
 
-        this.images = (this.filterByDistance && this.filterDistance) ? this.rawImages
+        this.images = (this.filterByDistance) ? this.rawImages
             .filter(img => img.distance == null || img.distance < this.filterDistance)
             .sort((a, b) => {
                 if ((!a.isTagged && !b.isTagged) || (a.isTagged && b.isTagged)){
@@ -239,7 +239,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 else return -1;
             });
 
-        if (this.filterByDistance && this.filterDistance){
+        if (this.filterByDistance){
             localStorage.setItem("filterDistance", this.filterDistance.toString());
         }
     }

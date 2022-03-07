@@ -1,38 +1,91 @@
-<div class="row">
-    <div class="col-md-12">
+<div class="form-row mt-2">
+    <div class="col">
         <div class="custom-file">
-            <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)" accept="image/*"
-                multiple="true" id="imagesFiles">
+            <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)"
+                accept="image/*" multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
-                Select or drag &amp; drop images where {{gcp.name}} is visible, then click it in each image
+                Select some images, then click on GCP "{{gcp.name}}" in each image.
             </label>
         </div>
+    </div>
+    <div class="col-md-auto" (click)="$event.stopPropagation()">
+        <div class="input-group">
+            <div class="input-group-append">
+                <div class="filter-settings" *ngIf="showFilterSettings">
+                    <input type="number" (ngModelChange)="updateDistanceRange($event)" [(ngModel)]="filterDistance" step="5" placeholder="Distance in meters" min="0" class="form-control">
+                </div>
+                <button title='Show only images that are within {{filterDistance}} meters of GCP "{{gcp.name}}"' class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterByDistance()">
+                    <fa-icon *ngIf="filterByDistance" icon="toggle-on" class="mr-2"></fa-icon>
+                    <fa-icon *ngIf="!filterByDistance" icon="toggle-off" class="mr-2"></fa-icon>
+                    Filter By Distance
+                </button>
+            </div>
+            <div class="input-group-append">
+                <button class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterSettings()">
+                    <fa-icon *ngIf="!showFilterSettings" icon="caret-down"></fa-icon>
+                    <fa-icon *ngIf="showFilterSettings" icon="caret-up"></fa-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <button title="Attempt to detect checkerboard pattern GCPs automatically (experimental)" [disabled]="images === null || images.length === 0 ? true : null" class="btn btn-info" type="button" (click)="detectImages()">
+            <fa-icon icon="search-location" class="mr-2"></fa-icon>
+            Detect GCPs
+        </button>
     </div>
 </div>
 <div class="row mt-2">
     <div class="col" *ngIf="images !== null">
-        <div *ngFor="let desc of images" class="align-top d-inline-block text-center border"
+        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border"
             [ngClass]="{'w-33': images.length >= 3, 'w-50': images.length <= 2}">
-            <span class="badge d-block rounded-0" [ngClass]="{                
-                'badge-success': desc.imageUrl !== null && desc.isTagged,
-                'badge-info': desc.imageUrl !== null && !desc.isTagged,
-                'badge-warning': desc.imageUrl == null}">
-                <h5 class="m-1">{{desc.image.imgName}}</h5>
-                <button type="button" class="close" aria-label="Close" (click)="remove(desc)">
+            <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
+                <h5 class="m-1">{{getName(desc)}}
+                    <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="filterByDistance && desc.distance == null" title="This image has no EXIF location data">
+                        <fa-icon [styles]="{'color': '#2c3e50'}" icon="map-marker-alt"></fa-icon>  
+                        <fa-icon icon="slash"></fa-icon>
+                    </fa-layers>
+                </h5>
+                
+                <button [title]="(desc.isTagged && desc.otherGcps.length > 0) ? 'Untag GCP' : 'Remove Image'" type="button" class="close" aria-label="Close" (click)="remove(desc)">
                     <span aria-hidden="true">&times;</span>
                 </button>
+                <a class="find" (click)="detect(desc)" title="Detect GCP">
+                    <div class="d-flex align-items-center h-100">
+                        <fa-icon icon="search"></fa-icon>
+                    </div>
+                </a>
             </span>
-            <app-smartimage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation" (pin)="pin($event, desc)">
+            <app-smartimage #smartImage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
+                (pin)="pin($event, desc)">
             </app-smartimage>
+        </div>
+        <div class="alert alert-info mt-2" *ngIf="!isLoading && filterByDistance && rawImages.length > 0 && images.length === 0">
+            <fa-icon icon="info-circle" class="mr-3"></fa-icon> No images seem to be within {{filterDistance}} meters of GCP "{{gcp.name}}", try turning off the distance filter or increase the distance radius.
         </div>
     </div>
 </div>
-
-<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center">    
-    <button class="btn btn-primary ml-3 my-3" (click)="back()">
+<div class="fixed-bottom bg-white d-flex justify-content-between align-items-center py-3">
+    <button class="btn btn-primary ml-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
     </button>
-    <button class="btn btn-primary mr-3 my-3" (click)="ok()">Save Changes
+    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [(page)]="page" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
+    <button class="btn btn-primary mr-3" (click)="ok()">Save Changes
         <fa-icon icon="save" class="ml-2"></fa-icon>
     </button>
+</div>
+<div class="loader" *ngIf="isLoading">
+    <div class="loader-content rounded shadow p-4">
+        <!-- close icon -->
+        <div class="close-icon" *ngIf="allowProgressClose">
+            <fa-icon icon="times" class="text-danger" (click)="interrupt()"></fa-icon>
+        </div>
+        <div class="text-center">
+            <fa-icon icon="cog" [spin]="true" size="2x"></fa-icon>
+        </div>
+        <div class="my-2 text-center">
+            {{loadingMessage}}
+        </div>
+        <div class="mb-2 text-center">{{loadingProgress | percent:'2.2-2'}}</div>
+    </div>
 </div>

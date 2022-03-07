@@ -253,9 +253,19 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
         this.ngZone.run(() => this.router.navigateByUrl('/images-tagger/' + gcp.name)).then();
     }
 
-    ngOnInit(): void {
+    onSmartImagesLayoutChanged = null;
 
+    ngOnInit(): void {
+        this.onSmartImagesLayoutChanged = () => {
+            this.updateGcps();
+        };
+        window.addEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
     }
+
+    ngOnDestroy(){
+        if (this.onSmartImagesLayoutChanged) window.removeEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
+    }
+    
 
     next(): void {
         this.router.navigateByUrl('/export-config');

@@ -63,7 +63,7 @@ export class LoadConfigTxtComponent implements OnInit {
 
                 try{
                     const imageUrl = (window.URL ? URL : webkitURL).createObjectURL(f);
-                    this.storageService.saveImageRaw(name, type, imageUrl);
+                    this.storageService.saveImageRaw(f, imageUrl);
     
                     this.images.push(name);
     

@@ -8,9 +8,12 @@
             </label>
         </div>
     </div>
-    <div class="col-md-auto">
+    <div class="col-md-auto" (click)="$event.stopPropagation()">
         <div class="input-group">
             <div class="input-group-append">
+                <div class="filter-settings" *ngIf="showFilterSettings">
+                    <input type="number" (ngModelChange)="updateDistanceRange($event)" [(ngModel)]="filterDistance" step="5" placeholder="Distance in meters" min="0" class="form-control">
+                </div>
                 <button title='Show only images that are within {{filterDistance}} meters of GCP "{{gcp.name}}"' class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterByDistance()">
                     <fa-icon *ngIf="filterByDistance" icon="toggle-on" class="mr-2"></fa-icon>
                     <fa-icon *ngIf="!filterByDistance" icon="toggle-off" class="mr-2"></fa-icon>
@@ -26,7 +29,7 @@
         </div>
     </div>
     <div class="col-md-auto">
-        <button title="Attempt to detect GCPs automatically (experimental)" [disabled]="images === null || images.length === 0 ? true : null" class="btn btn-info" type="button" (click)="detectImages()">
+        <button title="Attempt to detect checkerboard pattern GCPs automatically (experimental)" [disabled]="images === null || images.length === 0 ? true : null" class="btn btn-info" type="button" (click)="detectImages()">
             <fa-icon icon="search-location" class="mr-2"></fa-icon>
             Detect GCPs
         </button>

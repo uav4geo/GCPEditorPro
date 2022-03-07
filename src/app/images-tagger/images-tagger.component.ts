@@ -76,6 +76,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
+        window.removeEventListener("click", this.closeFilterSettings.bind(this));
     }
 
     ngAfterViewInit(): void {
@@ -84,6 +85,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.handleImages(e.detail.files);
         };
         window.addEventListener("droppedFiles", this.handleDrop);
+        window.addEventListener("click", this.closeFilterSettings.bind(this));
     }
 
 
@@ -191,7 +193,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
             this.filterImages();
 
-            this.setProgress("Done", 1, true);
+            this.setProgress("", 1, true);
 
         });
 
@@ -200,6 +202,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public toggleFilterByDistance(){
         this.filterByDistance = !this.filterByDistance;
         this.filterImages();
+        if (!this.filterByDistance) this.showFilterSettings = false;
+    }
+
+    public updateDistanceRange(e){
+        setTimeout(() => this.filterImages(), 1);
+    }
+
+    public closeFilterSettings(){
+        this.showFilterSettings = false;
     }
 
     public filterImages() {
@@ -322,7 +333,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             // Notify smart images that pins might have to be refreshed
             window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
 
-            this.setProgress("Done", 1, true);
+            this.setProgress("", 1, true);
 
         });
 
@@ -370,8 +381,6 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         
         const si = this.smartImages.find(si => si.src === desc.imageUrl);
         if (si) si.clearPin();
-        
-        // TODO: add distance filter settings
     }
 
     public remove(desc: ImageDescriptor) {
@@ -491,7 +500,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         }
 
-        this.setProgress("Done", 1, true);
+        this.setProgress("", 1, true);
 
     }
 

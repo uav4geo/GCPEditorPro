@@ -2,9 +2,7 @@ import { Injectable, isDevMode } from '@angular/core';
 import { GCPsDescriptor, TxtDescriptor, GCP, ImageGcp, Projection, ElevationMeasureUnit } from './gcps-utils.service';
 import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
-// import * as exif from 'node_modules/exif-js/exif.js';
-// import * as EXIF from 'node_modules/exif-js/exif.js';
-import exifr from 'exifr'
+import exifr from 'exifr';
 import { GPSCoords } from '../shared/common';
 
 @Injectable({
@@ -53,10 +51,12 @@ export class StorageService {
     }
 
     public hasLicense(): boolean {
-        return !!localStorage.getItem("license") && !this.getLicense().demo;
+        return (!!localStorage.getItem("license") && !this.getLicense().demo) || this.getLicense().dev;
     }
 
     public getLicense(): LicenseInfo {
+        // return new DevLicense(); 
+        
         if (!this.license) {
             const licstr = localStorage.getItem("license") || "";
             this.license = validate('gcpeditorpro', licstr);

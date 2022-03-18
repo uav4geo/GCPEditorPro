@@ -29,7 +29,8 @@ export class GcpsDetectorService {
 
     // *** Add here more classifiers ***
     private classifiers = [
-        "gcp-square-base.xml"  
+        "gcp-square-base.xml",  
+        "gcp-bw-quads.xml"
     ];
 
     loadClassifiers(): Promise<any> {

@@ -13,6 +13,8 @@ export class GcpsUtilsService {
             projection = "EPSG:4326"; // default
         }
         
+        projection = projection.replace(/\r/g, '');
+
         if (projection.toLowerCase().startsWith("epsg:")){
             projection = projection.replace(/^EPSG:/ig, '');
         }

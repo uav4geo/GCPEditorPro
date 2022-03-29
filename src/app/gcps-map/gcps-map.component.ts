@@ -76,7 +76,7 @@ export class GcpsMapComponent implements OnInit {
                 <b>Latitude:</b>&nbsp;${coords.y}<br />
                 <b>Longitude:</b>&nbsp;${coords.x}<br />
                 <b>Elevation:</b>&nbsp;${elevation}<br/>
-                <a style="color: #fff;" class="btn btn-sm btn-primary mt-2" href="#/images-tagger/${item.name}">${imageIcon} Tag</a>`;
+                <a style="color: #fff;" class="btn btn-sm btn-primary mt-2" href="#/images-tagger/${encodeURIComponent(item.name)}">${imageIcon} Tag</a>`;
             domPopup.append(domText);
             
             const deleteBtn = document.createElement("a");
@@ -250,7 +250,7 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
     }
 
     editImages(gcp: GCP) {
-        this.ngZone.run(() => this.router.navigateByUrl('/images-tagger/' + gcp.name)).then();
+        this.ngZone.run(() => this.router.navigateByUrl('/images-tagger/' + encodeURIComponent(gcp.name))).then();
     }
 
     onSmartImagesLayoutChanged = null;

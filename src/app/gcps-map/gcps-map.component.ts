@@ -210,8 +210,15 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
                 const {lat, lng} = latlng;
                 const [x, y] = proj4.default(this.storage.projection.eq, [lng, lat]);
 
+                let counter = this.storage.gcps.length;
+                let name = 'gcp' + counter.toString().padStart(2, '0');
+                while (this.storage.gcps.some((gcp) => gcp.name === name)) {
+                    counter++;
+                    name = 'gcp' + counter.toString().padStart(2, '0');
+                }
+
                 this.storage.gcps.push({
-                    name: "gcp" + (this.storage.gcps.length + 1).toString().padStart(2, '0'),
+                    name: name,
                     northing:y,
                     easting: x,
                     elevation: NaN

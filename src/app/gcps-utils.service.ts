@@ -182,7 +182,12 @@ export class GcpsUtilsService {
                     if (matchingGcps.length === 0) {
 
                         // It generates something like gcp01 gcp02 ...
-                        imgGcp.gcpName = 'gcp' + (gcps.length + 1).toString().padStart(2, '0');
+                        let counter = gcps.length;
+                        imgGcp.gcpName = 'gcp' + counter.toString().padStart(2, '0');
+                        while (gcps.some((gcp) => gcp.name === imgGcp.gcpName)) {
+                            counter++;
+                            imgGcp.gcpName = 'gcp' + counter.toString().padStart(2, '0');
+                        }
 
                         gcps.push({
                             northing: imgGcp.geoY,

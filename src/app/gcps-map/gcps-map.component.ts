@@ -252,6 +252,7 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
             this.selectedGCP = null;
         }
 
+        this.storage.imageGcps = this.storage.imageGcps.filter(imgGcp => imgGcp.gcpName !== gcpName);
         this.storage.gcps = this.storage.gcps.filter(gcp => gcp.name !== gcpName);
         this.updateGcps();
     }

@@ -4,6 +4,11 @@
     max-height: 60vh;
 }
 
+.img-fluid{
+    image-rendering: pixelated;
+    max-width: 640px; 
+}
+
 .gm-style-pbc {
     transition: opacity ease-in-out;
     background-color: rgba(0,0,0,0.45);

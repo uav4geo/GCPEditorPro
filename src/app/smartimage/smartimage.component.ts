@@ -178,9 +178,6 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit(): void {
-
-
-
     }
 
     private getPos(e: MouseEvent): CoordsXY {

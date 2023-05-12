@@ -50,7 +50,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
             maxScale: 300,
             cursor: 'default',
             animate: false,
-            canvas: true
+            canvas: true,
+            step: 0.7
         });
 
         const click = fromEvent(this.img.nativeElement, 'click');

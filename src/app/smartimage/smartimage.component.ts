@@ -47,10 +47,11 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
 
     ngAfterViewInit(): void {
         this.panzoom = Panzoom.default(this.img.nativeElement, {
-            maxScale: 200,
+            maxScale: 300,
             cursor: 'default',
             animate: false,
-            canvas: true
+            canvas: true,
+            step: 0.7
         });
 
         const click = fromEvent(this.img.nativeElement, 'click');
@@ -178,9 +179,6 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit(): void {
-
-
-
     }
 
     private getPos(e: MouseEvent): CoordsXY {

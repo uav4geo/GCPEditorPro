@@ -67,3 +67,19 @@ input {
         cursor: pointer;        
     }
 }
+
+.dyn-w{
+    width: 33% !important;
+}
+
+@media (max-width: 768px) {
+    .dyn-w{
+        width: 50% !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .dyn-w{
+        width: 100% !important;
+    }
+}

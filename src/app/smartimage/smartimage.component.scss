@@ -1,12 +1,14 @@
 .smart-image{
     position: relative;
     overflow: hidden;
-    max-height: 60vh;
+    max-width: 10000px;
+    max-height: 320px;
 }
 
 .img-fluid{
     image-rendering: pixelated;
-    max-width: 640px; 
+    max-width: 10000px; 
+    max-height: 320px;
 }
 
 .gm-style-pbc {

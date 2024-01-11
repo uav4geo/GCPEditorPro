@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { StorageService } from '../storage.service';
-import { ImageGcp, GCP, Projection, GcpsUtilsService } from '../gcps-utils.service';
+import {Component, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {StorageService} from '../storage.service';
+import {GCP, GcpsUtilsService, ImageGcp, Projection} from '../gcps-utils.service';
 import * as FileSaver from 'file-saver';
-import { stringify } from 'querystring';
 
 @Component({
     selector: 'app-export-config',
@@ -16,6 +15,7 @@ export class ExportConfigComponent implements OnInit {
     public gcps: GCP[];
     public projection: Projection;
     public extras: string[];
+    public replaceNanZ: boolean;
 
     constructor(private router: Router, public storage: StorageService, private utils: GcpsUtilsService) {
 
@@ -33,6 +33,7 @@ export class ExportConfigComponent implements OnInit {
         this.gcps = storage.gcps;
         this.projection = storage.projection;
         this.extras = utils.generateExtrasNames(this.imageGcps);
+        this.replaceNanZ = false;
     }
 
     ngOnInit(): void {
@@ -47,7 +48,8 @@ export class ExportConfigComponent implements OnInit {
         let content = this.projection.str + '\n';
 
         for (const img of this.imageGcps) {
-            content += `${img.geoX}\t${img.geoY}\t${img.geoZ}\t${img.imX}\t${img.imY}\t${img.imgName}\t${img.gcpName}\t${img.extras.join('\t')}`.trim() + '\n';
+            const geoZ = (img.geoZ !== img.geoZ) && this.replaceNanZ ? 0 : img.geoZ;
+            content += `${img.geoX}\t${img.geoY}\t${geoZ}\t${img.imX}\t${img.imY}\t${img.imgName}\t${img.gcpName}\t${img.extras.join('\t')}`.trim() + '\n';
         }
 
         return content;

@@ -39,6 +39,13 @@ Extract the source code in a directory, then from the directory:
 npm install
 ng serve
 ```
+If you have some "Conflicting peer dependency" you can try
+
+```bash
+npm install --legacy-peer-deps
+ng serve
+```
+
 
 After a while, the application should be available from your browser at http://localhost:4200.
 

@@ -39,11 +39,11 @@ Extract the source code in a directory, then from the directory:
 npm install
 ng serve
 ```
-If you have some "Conflicting peer dependency" you can try
+If you have some "Conflicting peer dependency" or other error you can try
 
 ```bash
 npm install --legacy-peer-deps
-ng serve
+export NODE_OPTIONS=--openssl-legacy-provider; ng serve
 ```
 
 

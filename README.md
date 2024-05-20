@@ -52,8 +52,6 @@ dist.bat
 ./dist.sh
 ```
 
-But note that you'll need to modify the storage service's `getLicense` method (around https://github.com/uav4geo/GCPEditorPro/blob/master/src/app/storage.service.ts#L53) to return always return a `DevLicense` if you want to remove the licensing dialogs.
-
 Results will be stored in the `dist/` folder.
 
 You can run `npm run stats` to analyze production bundle size

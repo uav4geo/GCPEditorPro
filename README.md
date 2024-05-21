@@ -1,4 +1,4 @@
-# GCP Editor Pro
+# GCP Editor Pro ©
 
 Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](https://opendronemap.org) software.
 

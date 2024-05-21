@@ -1,0 +1,2 @@
++proj=utm +zone=46 +ellps=WGS84 +datum=WGS84 +units=m +no_defs
+230649.94 2631114.55 4 2816.67 1477.78 DJI_0067.JPG gcp01

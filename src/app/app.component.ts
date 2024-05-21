@@ -58,7 +58,7 @@ export class AppComponent implements AfterViewInit {
         };
         dropArea.addEventListener('drop', handleDrop, false);
 
-        if (isDevMode()){
+        if (isDevMode() && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0")){
             this.storageService.license = new DevLicense();
         }else{
             if (!this.storageService.hasLicense()){

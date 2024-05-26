@@ -6,6 +6,7 @@ function validate(productId, license, hintCallback = null):  LicenseInfo{
     VoVtKfGxbtFNiME+3ffgu1srP1nvu4meZCfh+1Bwo1ufKKm/DFjHJ9MCAwEAAQ==
     -----END PUBLIC KEY-----`;
 
+    license = license.split("\n").map(l => l.trim()).join("\n");
     license = license.replace(/^\s*/, "");
     license = license.replace(/\s*$/, "");
     license = license.replace(/=+\s+END\sLICENSE\s+=+/i, "");

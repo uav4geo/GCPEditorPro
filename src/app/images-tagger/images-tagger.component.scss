@@ -64,17 +64,17 @@ input {
         position: absolute;
         right: 10px;
         top: 0;
-        cursor: pointer;        
+        cursor: pointer;
     }
 }
 
 .dyn-w{
-    width: 33% !important;
+    width: 100% !important;
 }
 
 @media (max-width: 768px) {
     .dyn-w{
-        width: 50% !important;
+        width: 100% !important;
     }
 }
 

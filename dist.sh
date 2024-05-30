@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export NODE_OPTIONS=--openssl-legacy-provider;
 yarn
 rm -fr dist
 npm run electron-build

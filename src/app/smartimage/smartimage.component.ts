@@ -169,11 +169,16 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const parentRect = this.img.nativeElement.parentElement.getClientRects()[0];
 
         const naturalWidth = this.img.nativeElement.naturalWidth;
+        const naturalHeight = this.img.nativeElement.naturalHeight;
+        
         const width = this.img.nativeElement.width;
-        const scale = width / naturalWidth;
+        const height = this.img.nativeElement.height;
+        
+        const scaleX = width / naturalWidth;
+        const scaleY = height / naturalHeight;
 
-        const left = (rect.left - parentRect.left) + this.pinLocationValue.x * scale * zoom;
-        const top = (rect.top - parentRect.top) + this.pinLocationValue.y * scale * zoom;
+        const left = (rect.left - parentRect.left) + this.pinLocationValue.x * scaleX * zoom;
+        const top = (rect.top - parentRect.top) + this.pinLocationValue.y * scaleY * zoom;
 
         return { x: left, y: top };
     }
@@ -189,7 +194,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const naturalHeight = this.img.nativeElement.naturalHeight;
         const width = this.img.nativeElement.width;
         const height = this.img.nativeElement.height;
-        const scale = width / naturalWidth;
+        const scaleX = width / naturalWidth;
+        const scaleY = height / naturalHeight;
 
         const relx = e.clientX - rect.left;
         const rely = e.clientY - rect.top;
@@ -197,8 +203,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const x = relx / zoom;
         const y = rely / zoom;
 
-        const realX = x / scale;
-        const realY = y / scale;
+        const realX = x / scaleX;
+        const realY = y / scaleY;
 
         return { x: realX, y: realY };
     }

@@ -51,7 +51,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
             cursor: 'default',
             animate: false,
             canvas: true,
-            step: 0.7
+            step: 0.7,
+            overflow: "visible"
         });
 
         const click = fromEvent(this.img.nativeElement, 'click');
@@ -70,12 +71,13 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
 
                 if (timeout !== null) {
                     clearTimeout(timeout);
+                    timeout = null;
                 }
 
                 timeout = setTimeout(() => {
                     this.syncPinPosition();
                     this.pinDiv.nativeElement.style.display = 'block';
-                }, 500);
+                }, 250);
             }
 
             start = Date.now();

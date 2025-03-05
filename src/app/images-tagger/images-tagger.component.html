@@ -56,7 +56,7 @@
                 </a>
             </span>
             <app-smartimage #smartImage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
-                (pin)="pin($event, desc)">
+                (pin)="pin($event, desc)" style="display: block; overflow: hidden">
             </app-smartimage>
         </div>
         <div class="alert alert-info mt-2" *ngIf="!isLoading && filterByDistance && rawImages.length > 0 && images.length === 0">

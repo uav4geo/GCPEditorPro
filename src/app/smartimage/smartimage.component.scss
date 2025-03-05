@@ -1,8 +1,6 @@
 .smart-image{
     position: relative;
-    overflow-x: scroll;
-    overflow-y: hidden;
-    max-width: 10000px;
+    max-width: 320px;
     max-height: 320px;
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
     scrollbar-width: none;  /* Firefox */
@@ -11,13 +9,9 @@
     display: none; /* Safari / Chrome */
 }
 
-.smart-image > div{
-    overflow: visible !important;
-}
-
 .img-fluid{
     image-rendering: pixelated;
-    max-width: 10000px; 
+    max-width: 320px; 
     max-height: 320px;
 }
 

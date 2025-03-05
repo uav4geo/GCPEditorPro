@@ -171,8 +171,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const naturalWidth = this.img.nativeElement.naturalWidth;
         const naturalHeight = this.img.nativeElement.naturalHeight;
         
-        const width = this.img.nativeElement.width;
-        const height = this.img.nativeElement.height;
+        const width = rect.width / zoom; //this.img.nativeElement.width;
+        const height = rect.height / zoom; //this.img.nativeElement.height;
         
         const scaleX = width / naturalWidth;
         const scaleY = height / naturalHeight;
@@ -192,8 +192,8 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
         const rect = this.img.nativeElement.getClientRects()[0];
         const naturalWidth = this.img.nativeElement.naturalWidth;
         const naturalHeight = this.img.nativeElement.naturalHeight;
-        const width = this.img.nativeElement.width;
-        const height = this.img.nativeElement.height;
+        const width = rect.width / zoom; //this.img.nativeElement.width;
+        const height = rect.height / zoom; //this.img.nativeElement.height;
         const scaleX = width / naturalWidth;
         const scaleY = height / naturalHeight;
 

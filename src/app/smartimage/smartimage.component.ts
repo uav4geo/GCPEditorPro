@@ -75,7 +75,7 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
                 timeout = setTimeout(() => {
                     this.syncPinPosition();
                     this.pinDiv.nativeElement.style.display = 'block';
-                }, 250);
+                }, 500);
             }
 
             start = Date.now();

@@ -39,7 +39,7 @@
     <div class="col" *ngIf="images !== null">
         <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border dyn-w">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
-                <h5 class="m-1">{{getName(desc)}}
+                <h5 class="m-1 title">{{getName(desc)}}
                     <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="filterByDistance && desc.distance == null" title="This image has no EXIF location data">
                         <fa-icon [styles]="{'color': '#2c3e50'}" icon="map-marker-alt"></fa-icon>  
                         <fa-icon icon="slash"></fa-icon>

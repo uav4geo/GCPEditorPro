@@ -28,6 +28,13 @@ input {
     user-select: none;
 }
 
+.title{
+    text-overflow: ellipsis;
+    direction: rtl;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
 .filter-settings{
     position: absolute;
     top: 36px;
@@ -69,7 +76,13 @@ input {
 }
 
 .dyn-w{
-    width: 33% !important;
+    width: 25% !important;
+}
+
+@media (max-width: 1200px) {
+    .dyn-w{
+        width: 33% !important;
+    }
 }
 
 @media (max-width: 768px) {

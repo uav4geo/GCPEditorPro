@@ -183,10 +183,10 @@ export class GcpsUtilsService {
 
                         // It generates something like gcp01 gcp02 ...
                         let counter = gcps.length;
-                        imgGcp.gcpName = 'gcp' + counter.toString().padStart(2, '0');
+                        imgGcp.gcpName = 'GCP-' + (counter + 1).toString();
                         while (gcps.some((gcp) => gcp.name === imgGcp.gcpName)) {
                             counter++;
-                            imgGcp.gcpName = 'gcp' + counter.toString().padStart(2, '0');
+                            imgGcp.gcpName = 'GCP-' + (counter + 1).toString();
                         }
 
                         gcps.push({

@@ -25,6 +25,7 @@ export class GcpsMapComponent implements OnInit {
 
     private markers: L.FeatureGroup;
     private map: L.Map;
+    private prevNames: object = {};
 
     // Set the initial set of displayed layers (we could also use the leafletLayers input binding for this)
     options = {
@@ -54,6 +55,7 @@ export class GcpsMapComponent implements OnInit {
                 proj4.default.WGS84,
                 [item.easting, item.northing, item.elevation]);
             const elevation = isNaN(item.elevation) ? "None" : item.elevation;
+            const isChk = typeof item.name === "string" && item.name.startsWith("CHK-");
 
             const markerLayer = marker(new L.LatLng(coords.y, coords.x, coords.z), {
                 title: item.name,
@@ -61,7 +63,7 @@ export class GcpsMapComponent implements OnInit {
                 icon: icon({
                     iconSize: [25, 41],
                     iconAnchor: [13, 41],
-                    iconUrl: 'leaflet/marker-icon-2x.png',
+                    iconUrl: isChk ? 'assets/cp-icon-2x.png' : 'leaflet/marker-icon-2x.png',
                     shadowUrl: 'leaflet/marker-shadow.png'
                 })
             });
@@ -76,9 +78,50 @@ export class GcpsMapComponent implements OnInit {
                 <b>Latitude:</b>&nbsp;${coords.y}<br />
                 <b>Longitude:</b>&nbsp;${coords.x}<br />
                 <b>Elevation:</b>&nbsp;${elevation}<br/>
+                <b>Checkpoint:</b>&nbsp;<input style="position: relative; top: 2px" type="checkbox" ${isChk ? "checked" : ""}><br/>
                 <a style="color: #fff;" class="btn btn-sm btn-primary mt-2" href="#/images-tagger/${encodeURIComponent(item.name)}">${imageIcon} Tag</a>`;
             domPopup.append(domText);
-            
+
+            domText.addEventListener("click", e => {
+                let target = e.target as HTMLElement;
+                if (target.tagName === 'INPUT') {
+                    console.log((target as HTMLInputElement).checked);
+                    
+                    // Rename by appending/removing CHK- prefix
+                    const prevName = item.name;
+                    let newName = "";
+                    
+                    if (this.prevNames[prevName] !== undefined){
+                        newName = this.prevNames[prevName];
+                    }else if (prevName.startsWith("GCP-")){
+                        newName = "CHK-" + prevName.substring(4);
+                    }else if (prevName.startsWith("CHK-")){
+                        newName = "GCP-" + prevName.substring(4);
+                    }else{
+                        // GCP with no GCP- prefix
+                        newName = "CHK-" + prevName;
+                    }
+                    
+                    // Check for conflicts
+                    let ch = 65; // 'A'
+                    let popLast = false;
+                    while(this.storage.gcps.filter(gcp => gcp.name === newName).length !== 0){
+                        if (popLast) newName = newName.slice(0, -1);
+                        newName = newName + String.fromCharCode(ch++);
+                        popLast = true;
+                    }
+
+                    this.prevNames[newName] = prevName;
+                    
+                    this.storage.imageGcps.forEach(gcp => {
+                        if (gcp.gcpName === prevName) gcp.gcpName = newName;
+                    });
+                    item.name = newName;
+
+                    this.updateGcps();
+                }
+            });
+
             const deleteBtn = document.createElement("a");
             deleteBtn.style.color = "#fff";
             deleteBtn.className = "btn btn-sm btn-danger mt-2";
@@ -211,10 +254,10 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
                 const [x, y] = proj4.default(this.storage.projection.eq, [lng, lat]);
 
                 let counter = this.storage.gcps.length;
-                let name = 'gcp' + counter.toString().padStart(2, '0');
+                let name = 'GCP-' + (counter + 1).toString();
                 while (this.storage.gcps.some((gcp) => gcp.name === name)) {
                     counter++;
-                    name = 'gcp' + counter.toString().padStart(2, '0');
+                    name = 'GCP-' + (counter + 1).toString();
                 }
 
                 this.storage.gcps.push({

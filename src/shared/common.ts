@@ -3,7 +3,7 @@
 export class CoordsXYZ {
     public x: number;
     public y: number;
-    public z: number;
+    public z?: number;
 }
 
 export class CoordsXY {

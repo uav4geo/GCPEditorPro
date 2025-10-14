@@ -4,7 +4,7 @@ import { GCP } from '../gcps-utils.service';
 import { Router } from '@angular/router';
 import { icon, Map, marker } from 'leaflet';
 import * as L from 'leaflet';
-import * as proj4 from 'proj4';
+import proj4 from "proj4";
 import Autolayers from './Leaflet.Autolayers/leaflet-autolayers';
 import SimpleMarkers from './Leaflet.SimpleMarkers/Control.SimpleMarkers';
 import Geocoder from './Leaflet.Geocoder/Control.Geocoder';
@@ -45,19 +45,17 @@ export class GcpsMapComponent implements OnInit {
     }
 
     private updateGcps(adjustMapBounds: Boolean = false): void{
-        const prj = proj4.default.Proj(this.storage.projection.eq);
-
         this.markers.clearLayers();
         this.gcps.length = 0;
         this.storage.gcps.forEach(item => {
-            const coords = proj4.default.transform(
-                prj,
-                proj4.default.WGS84,
-                [item.easting, item.northing, item.elevation]);
+            const coords = proj4(
+                this.storage.projection.eq,
+                'EPSG:4326').forward([item.easting, item.northing, item.elevation],
+                false);
             const elevation = isNaN(item.elevation) ? "None" : item.elevation;
             const isChk = typeof item.name === "string" && item.name.startsWith("CHK-");
 
-            const markerLayer = marker(new L.LatLng(coords.y, coords.x, coords.z), {
+            const markerLayer = marker(new L.LatLng(coords[1], coords[0], coords[2]), {
                 title: item.name,
                 riseOnHover: true,
                 icon: icon({
@@ -75,8 +73,8 @@ export class GcpsMapComponent implements OnInit {
             const domText = document.createElement("div");
             domText.innerHTML = `<b>${item.name}</b>
                 <hr class="my-2">
-                <b>Latitude:</b>&nbsp;${coords.y}<br />
-                <b>Longitude:</b>&nbsp;${coords.x}<br />
+                <b>Latitude:</b>&nbsp;${coords[1]}<br />
+                <b>Longitude:</b>&nbsp;${coords[0]}<br />
                 <b>Elevation:</b>&nbsp;${elevation}<br/>
                 <b>Checkpoint:</b>&nbsp;<input style="position: relative; top: 2px" type="checkbox" ${isChk ? "checked" : ""}><br/>
                 <a style="color: #fff;" class="btn btn-sm btn-primary mt-2" href="#/images-tagger/${encodeURIComponent(item.name)}">${imageIcon} Tag</a>`;
@@ -251,7 +249,7 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
             add_marker_callback: latlng => {
                 // Get marker location and convert to user proj
                 const {lat, lng} = latlng;
-                const [x, y] = proj4.default(this.storage.projection.eq, [lng, lat]);
+                const [x, y] = proj4(this.storage.projection.eq, [lng, lat]);
 
                 let counter = this.storage.gcps.length;
                 let name = 'GCP-' + (counter + 1).toString();

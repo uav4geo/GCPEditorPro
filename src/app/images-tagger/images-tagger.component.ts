@@ -5,7 +5,7 @@ import { ImageGcp, GCP } from '../gcps-utils.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'
 
 import * as rfdc from 'rfdc';
-import * as proj4 from 'proj4';
+import proj4 from "proj4";
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { GcpsDetectorService } from '../gcps-detector.service';
@@ -111,13 +111,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.gcp = matches[0];
 
         // console.log("Using projection: ", this.storage.projection);
-        const prj = proj4.default.Proj(this.storage.projection.eq);
 
         // We need this to be able to calculate the distance
-        this.gcpCoords = proj4.default.transform(
-            prj,
-            proj4.default.WGS84,
-            [this.gcp.easting, this.gcp.northing, this.gcp.elevation]);
+        let coords = proj4(
+            this.storage.projection.eq,
+            'EPSG:4326').forward([this.gcp.easting, this.gcp.northing, this.gcp.elevation],
+            false);
+        this.gcpCoords.x = coords[0];
+        this.gcpCoords.y = coords[1];
+        if (coords.length === 3) this.gcpCoords.z = coords[2];
 
         // console.log("GCP coords: ", this.gcpCoords);
 

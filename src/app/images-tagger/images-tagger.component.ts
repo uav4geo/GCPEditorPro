@@ -11,7 +11,6 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { GcpsDetectorService } from '../gcps-detector.service';
 import { CoordsXY, CoordsXYZ, GPSCoords } from '../../shared/common';
 import { getDistanceFromLatLonInM, toHumanDistance } from 'src/shared/utils';
-import { ThrowStmt } from '@angular/compiler';
 import { SmartimageComponent } from '../smartimage/smartimage.component';
 
 const clone = rfdc();

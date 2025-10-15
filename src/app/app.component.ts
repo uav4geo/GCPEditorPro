@@ -3,7 +3,7 @@ import { Router, RouterEvent } from '@angular/router';
 import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import { validate, DevLicense } from './licenser';
 import { StorageService } from './storage.service';
-
+// import proj4 from "proj4";
 
 @Component({
     selector: 'app-root',
@@ -81,6 +81,32 @@ export class AppComponent implements AfterViewInit {
                 window.parent.postMessage(document.body.scrollHeight, "*");
             }, 200); 
         }
+
+        // // Load projection definitions
+        // try {
+        //     const xhr = new XMLHttpRequest();
+        //     xhr.open('GET', 'assets/epsg.json', true);
+        //     xhr.onreadystatechange = function() {
+        //         if (xhr.readyState === 4 && xhr.status === 200) {
+        //             try {
+        //                 const epsgData = JSON.parse(xhr.responseText);
+                        
+        //                 epsgData.forEach(def => {
+        //                     if (def[0] === "6319") console.log(def);
+        //                     proj4.defs("EPSG:" + def[0], def[1]);
+        //                 });
+        //                 console.log(proj4);
+        //             } catch (error) {
+        //                 console.error('Failed to parse EPSG definitions:', error);
+        //             }
+        //         } else if (xhr.readyState === 4) {
+        //             console.error('Failed to load EPSG definitions:', xhr.statusText);
+        //         }
+        //     };
+        //     xhr.send();
+        // } catch (error) {
+        //     console.error('Failed to load EPSG definitions:', error);
+        // }
     }
 
     isActive(route: string): boolean {

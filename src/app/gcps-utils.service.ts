@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import * as defs from 'node_modules/epsg/crs-defs.json';
+import * as defs from '../epsg.json';
 
 @Injectable({
     providedIn: 'root'

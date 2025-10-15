@@ -54,6 +54,8 @@
     "postinstall": "patch-package",
     "electron": "electron .",
     "electron-build": "ng build --prod --base-href ./",
+    "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/",
+    "web-build": "ng build --prod --base-href ./",
     "dist": "./node_modules/.bin/electron-builder"
   },
   "private": true,

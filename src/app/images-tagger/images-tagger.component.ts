@@ -114,8 +114,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         // We need this to be able to calculate the distance
         let coords = proj4(
             this.storage.projection.eq,
-            'EPSG:4326').forward([this.gcp.easting, this.gcp.northing, this.gcp.elevation],
-            false);
+            'EPSG:4326').forward([this.gcp.easting, this.gcp.northing, this.gcp.elevation], false);
+        this.gcpCoords = new CoordsXYZ();
         this.gcpCoords.x = coords[0];
         this.gcpCoords.y = coords[1];
         if (coords.length === 3) this.gcpCoords.z = coords[2];

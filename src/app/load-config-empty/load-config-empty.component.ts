@@ -32,6 +32,7 @@ export class LoadConfigEmptyComponent implements OnInit {
             this.storageService.gcps = [];
             this.storageService.projection = this.projection || this.utilsService.getProjection("EPSG:4326");
             this.storageService.imageGcps = [];
+            this.storageService.prevNames = {};
             this.router.navigateByUrl('/gcps-map');
         };
 

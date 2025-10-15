@@ -25,7 +25,6 @@ export class GcpsMapComponent implements OnInit {
 
     private markers: L.FeatureGroup;
     private map: L.Map;
-    private prevNames: object = {};
 
     // Set the initial set of displayed layers (we could also use the leafletLayers input binding for this)
     options = {
@@ -89,8 +88,8 @@ export class GcpsMapComponent implements OnInit {
                     const prevName = item.name;
                     let newName = "";
                     
-                    if (this.prevNames[prevName] !== undefined){
-                        newName = this.prevNames[prevName];
+                    if (this.storage.prevNames[prevName] !== undefined){
+                        newName = this.storage.prevNames[prevName];
                     }else if (prevName.startsWith("GCP-")){
                         newName = "CHK-" + prevName.substring(4);
                     }else if (prevName.startsWith("CHK-")){
@@ -109,7 +108,7 @@ export class GcpsMapComponent implements OnInit {
                         popLast = true;
                     }
 
-                    this.prevNames[newName] = prevName;
+                    this.storage.prevNames[newName] = prevName;
                     
                     this.storage.imageGcps.forEach(gcp => {
                         if (gcp.gcpName === prevName) gcp.gcpName = newName;

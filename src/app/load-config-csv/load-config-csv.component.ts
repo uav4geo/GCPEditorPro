@@ -119,6 +119,7 @@ export class LoadConfigCsvComponent implements OnInit {
         this.storageService.gcps = this.csvParseResult.descriptor.gcps;
         this.storageService.projection = this.csvParseResult.descriptor.projection;
         this.storageService.imageGcps = [];
+        this.storageService.prevNames = {};
 
         this.router.navigateByUrl('/gcps-map');
     }

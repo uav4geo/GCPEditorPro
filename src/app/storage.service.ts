@@ -15,6 +15,7 @@ export class StorageService {
     public projection: Projection;
     public images: ImageInfo[] = [];
     public license: LicenseInfo;
+    public prevNames: object = {};
 
     public saveImage(image: ImageInfo): ImageInfo {
         const match = this.images.filter(item => item.name === image.name);

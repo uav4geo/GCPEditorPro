@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import * as defs from '../epsg.json';
+import * as legacyDefs from 'epsg';
+import * as newDefs from '../epsg.json';
+
+function getDef(key){
+    if (legacyDefs.default[key]) return legacyDefs.default[key];
+    else if (newDefs.default[key]) return newDefs.default[key];
+}
 
 @Injectable({
     providedIn: 'root'
@@ -49,7 +55,7 @@ export class GcpsUtilsService {
 
             if (projection.toLowerCase().startsWith('epsg:')) {
 
-                const proj = defs.default[projection.toUpperCase()];
+                const proj = getDef(projection.toUpperCase());
 
                 if (typeof proj === 'undefined' || proj == null) {
                     return null;
@@ -63,7 +69,7 @@ export class GcpsUtilsService {
             // How deeply are we in love, JS? Just a good old VB6 IsNumeric was too much to ask
             } else if (+projection === +projection) {
 
-                const proj = defs.default['EPSG:' + projection];
+                const proj = getDef('EPSG:' + projection);
 
                 if (typeof proj === 'undefined' || proj == null) {
                     return null;

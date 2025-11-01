@@ -15,14 +15,24 @@ export class GcpsUtilsService {
     constructor() { }
 
     public getProjection(projection: string): Projection {
+        let vert = "";
+
         if (typeof projection === 'undefined' || projection === null || projection === "") {
             projection = "EPSG:4326"; // default
         }
         
-        projection = projection.replace(/\r/g, '');
+        projection = projection.replace(/\r/g, '').trim();
 
         if (projection.toLowerCase().startsWith("epsg:")){
             projection = projection.replace(/^EPSG:/ig, '');
+        }
+
+        if (!projection.toLowerCase().startsWith("+proj") && !projection.toLowerCase().startsWith("utm")){
+            let plusIdx = projection.indexOf("+");
+            if (plusIdx !== -1){
+                vert = projection.substring(plusIdx + 1).trim();
+                projection = projection.substring(0, plusIdx).trim();
+            }
         }
 
         const ref = projection.split(' ');
@@ -40,17 +50,19 @@ export class GcpsUtilsService {
                     proj4 += ' +south=True';
                 }
 
-                return {
-                    eq: proj4,
-                    str: projection
-                };
+                return new Projection(
+                    proj4,
+                    projection,
+                    vert
+                );
             }
 
             if (projection.indexOf('+proj=') !== -1) {
-                return {
-                    eq: projection,
-                    str: projection
-                };
+                return new Projection(
+                    projection,
+                    projection,
+                    vert
+                );
             }
 
             if (projection.toLowerCase().startsWith('epsg:')) {
@@ -61,10 +73,11 @@ export class GcpsUtilsService {
                     return null;
                 }
 
-                return {
-                    eq: proj,
-                    str: projection
-                };
+                return new Projection(
+                    proj,
+                    projection,
+                    vert
+                );
 
             // How deeply are we in love, JS? Just a good old VB6 IsNumeric was too much to ask
             } else if (+projection === +projection) {
@@ -75,10 +88,11 @@ export class GcpsUtilsService {
                     return null;
                 }
 
-                return {
-                    eq: proj,
-                    str: 'EPSG:' + projection
-                };
+                return new Projection(
+                    proj,
+                    'EPSG:' + projection,
+                    vert
+                );
             }
 
 
@@ -352,8 +366,16 @@ export class GcpsUtilsService {
 }
 
 export class Projection {
-    public str: string;
-    public eq: string;
+    constructor(
+        public eq: string,
+        public str: string,
+        public vert: string
+    ) {}
+
+    public to_str(): string {
+        if (this.vert) return `${this.str}+${this.vert}`;
+        else return this.str;
+    }
 }
 
 export enum ProjectionType {

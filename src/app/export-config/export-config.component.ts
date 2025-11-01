@@ -44,7 +44,7 @@ export class ExportConfigComponent implements OnInit {
 
     private getTxtContent(): string {
 
-        let content = this.projection.str + '\n';
+        let content = this.projection.to_str() + '\n';
 
         for (const img of this.imageGcps) {
             content += `${img.geoX}\t${img.geoY}\t${img.geoZ}\t${img.imX}\t${img.imY}\t${img.imgName}\t${img.gcpName}\t${img.extras.join('\t')}`.trim() + '\n';

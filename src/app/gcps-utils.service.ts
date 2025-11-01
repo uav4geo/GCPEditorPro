@@ -262,46 +262,69 @@ export class GcpsUtilsService {
         }
 
         const header = data[0];
-        if (header.length !== 4) {
-            result.errors = ['Header must have exactly 4 colums, but the file has ' + header.length];
+        if (header.length < 3) {
+            result.errors = ['Header must have at least 3 colums, but the file has ' + header.length];
             return result;
         }
-
-        // People can choose the labels they want
-        // we could enfore them by uncommenting this
-        // if (header[0] !== 'GCP Label') {
-        //     result.errors = ['Missing "GCP Label" header from first column'];
-        //     return result;
-        // }
-
-        // const elevationCaption = header[3];
-
-        // if (!(header[1] === 'Northing' || header[2] === 'Easting' || elevationCaption === 'Elevation (m)') &&
-        //     !(header[1] === 'Latitude' || header[2] === 'Longitude' || elevationCaption === 'Elevation (m)') &&
-        //     !(header[1] === 'Northing' || header[2] === 'Easting' || elevationCaption === 'Elevation (ft)')
-        // ) {
-        //     result.errors = ['Invalid column headers'];
-        //     return result;
-        // }
 
         const gcps: GCP[] = [];
         result.errors = [];
         const gcpsHashmap = {};
+
+        let fields = {
+            "name": ["GCP Label", "Label", "Name", "GCP"],
+            "x":  ["Easting", "X", "Longitude", "Lon"],
+            "y": ["Northing", "Y", "Latitude", "Lat"],
+            "z": ["Elevation", "Z", "Altitude", "Alt"]
+        }
+        let unitRemove = v => v.replace(/\(.+\)/g, "").trim();
+        let cols = {};
+        
+        let c = 0;
+        for (let k in fields){
+            let searchFields = fields[k];
+            let idx = -1;
+            for (let j = 0; j < searchFields.length; j++){
+                let f = searchFields[j].toLowerCase();
+                for (let i = 0; i < header.length; i++){
+                    let v = unitRemove(header[i].toLowerCase().trim());
+                    if (v == f){
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx !== -1) break;
+            }
+            if (idx !== -1){
+                cols[k] = idx;
+            } else{
+                // not found
+                if (k === 'name') cols[k] = -1;
+                else cols[k] = c;
+            }
+            c++;
+        }
+        
+        if (cols['x'] === cols['y'] || cols['y'] === cols['z'] || cols['z'] === cols['x']){
+            result.errors.push('Cannot identify Northing/Easting/Elevation columns');
+            return result;
+        }
 
         // Skip the header, foreach row in csv
         for (let n = 1; n < data.length; n++) {
             const row = data[n];
 
             // Check fields count
-            if (row.length !== 4) {
-                result.errors.push('Row ' + n + ' should have 4 colums');
+            if (row.length !== header.length) {
+                result.errors.push('Row ' + n + ' should have ' + header.length + ' colums');
                 continue;
             }
-
-            const name = row[0].trim();
-            const northing = parseFloat(row[1]);
-            const easting = parseFloat(row[2]);
-            const elevation = parseFloat(row[3]);
+            
+            let name = `GCP-${n}`;
+            if (cols['name'] !== -1) name = row[cols['name']].trim();
+            const northing = parseFloat(row[cols['y']]);
+            const easting = parseFloat(row[cols['x']]);
+            const elevation = parseFloat(row[cols['z']]);
 
             if (name.length === 0) {
                 result.errors.push('In row ' + n + ' the GCP Label is empty');

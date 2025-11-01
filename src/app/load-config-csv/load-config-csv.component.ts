@@ -24,7 +24,7 @@ export class LoadConfigCsvComponent implements OnInit {
     public hideCsvTemplates = false;
     public errors: string[];
     public csvFileName: string[] = null;
-    public csvHeader: string[];
+    public csvHeader: string[] = ["GCP Label", "X", "Y", "Z"];
     public epsgProj4: string;
     public isReady = false;
     public csvParseResult: CsvParseResult = null;
@@ -49,7 +49,6 @@ export class LoadConfigCsvComponent implements OnInit {
         this.csvFileName = null;
         this.descriptor = null;
         this.errors = null;
-        this.csvHeader = null;
         this.isReady = false;
 
         const reader = new FileReader();
@@ -85,7 +84,6 @@ export class LoadConfigCsvComponent implements OnInit {
                     }
 
                     this.errors = null;
-                    this.csvHeader = result.data[0];
                     this.descriptor = res.descriptor;
                     this.csvFileName = file.name;
 
@@ -97,7 +95,6 @@ export class LoadConfigCsvComponent implements OnInit {
             });
         };
         reader.onerror = () => {
-            this.csvHeader = null;
             this.descriptor = null;
             this.csvFileName = null;
             this.errors = ['Unable to load file'];

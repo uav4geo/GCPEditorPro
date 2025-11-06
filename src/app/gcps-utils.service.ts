@@ -176,6 +176,8 @@ export class GcpsUtilsService {
                 result.errors.push('In row ' + n + ' missing imgName');
             }
 
+            imgGcp.imgName = importImgName(imgGcp.imgName);
+
             if (row.length > 6) {
 
                 imgGcp.gcpName = row[6]?.trim();
@@ -449,4 +451,12 @@ export class ImageGcp {
     public gcpName: string;
 
     public extras: string[];
+}
+
+export function exportImgName(imgName: string): string{
+    return imgName.replace(/ /g, "%20");
+}
+
+export function importImgName(imgName: string): string{
+    return imgName.replace(/%20/g, " ");
 }

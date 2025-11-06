@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { StorageService } from '../storage.service';
-import { ImageGcp, GCP, Projection, GcpsUtilsService } from '../gcps-utils.service';
+import { ImageGcp, GCP, Projection, GcpsUtilsService, exportImgName } from '../gcps-utils.service';
 import * as FileSaver from 'file-saver';
 import { stringify } from 'querystring';
 
@@ -47,10 +47,14 @@ export class ExportConfigComponent implements OnInit {
         let content = this.projection.to_str() + '\n';
 
         for (const img of this.imageGcps) {
-            content += `${img.geoX}\t${img.geoY}\t${img.geoZ}\t${img.imX}\t${img.imY}\t${img.imgName}\t${img.gcpName}\t${img.extras.join('\t')}`.trim() + '\n';
+            content += `${img.geoX}\t${img.geoY}\t${img.geoZ}\t${img.imX}\t${img.imY}\t${exportImgName(img.imgName)}\t${img.gcpName}\t${img.extras.join('\t')}`.trim() + '\n';
         }
 
         return content;
+    }
+
+    public exportImgName(imgName: string): string{
+        return exportImgName(imgName);
     }
 
     public exportTxt() {

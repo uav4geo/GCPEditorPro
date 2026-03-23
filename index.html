@@ -8,11 +8,32 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicons/site.webmanifest">
-<link rel="stylesheet" href="styles.cef85169feb28dfdbe6a.css"></head>
-
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#3498db">
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+<link rel="stylesheet" href="styles.f0420182c931ad3e2fc6.css"></head>
 <body>
-    <app-root></app-root>
-<script src="runtime-es2015.0dae8cbc97194c7caed4.js" type="module"></script><script src="runtime-es5.0dae8cbc97194c7caed4.js" nomodule defer></script><script src="polyfills-es5.9664b61b6db1dfdf85ae.js" nomodule defer></script><script src="polyfills-es2015.a5eed4808b252bc0cdbe.js" type="module"></script><script src="scripts.67006119752382ed18df.js" defer></script><script src="main-es2015.172549d66359f5af7287.js" type="module"></script><script src="main-es5.172549d66359f5af7287.js" nomodule defer></script></body>
+    <app-root>
+        <div id="initial-loader" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+        </div>
+    </app-root>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker registered, scope:', reg.scope);
+            }).catch(err => {
+                console.log('Service Worker registration failed:', err);
+            });
+        });
+    }
+</script>
+<script src="runtime.d6c52737d4587c65265f.js" defer></script><script src="polyfills.578a7035002e27f4f134.js" defer></script><script src="scripts.7f8ba0f2d53f6d20c400.js" defer></script><script src="main.0cad801bb26fbec2e3b2.js" defer></script></body>
 
 </html>

@@ -9,7 +9,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicons/site.webmanifest">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#3498db">
     <style>
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -23,6 +24,17 @@
             <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
         </div>
     </app-root>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker registered, scope:', reg.scope);
+            }).catch(err => {
+                console.log('Service Worker registration failed:', err);
+            });
+        });
+    }
+</script>
 </body>
 
 </html>

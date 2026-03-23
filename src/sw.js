@@ -1,23 +1,23 @@
 // GCP Editor Pro - Service Worker for offline support
-const CACHE_NAME = 'gcp-editor-pro-v1';
+const CACHE_NAME = 'gcp-editor-pro-v3';
 
-// Assets to pre-cache on install
-const PRECACHE_URLS = [
-  './',
-  './index.html',
-  './manifest.webmanifest'
-];
-
-// Install: pre-cache essential shell files
+// Install: fetch the build file list and pre-cache everything
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(PRECACHE_URLS);
-    }).then(() => self.skipWaiting())
+    fetch('./cache-files.json')
+      .then(response => response.json())
+      .then(files => {
+        return caches.open(CACHE_NAME).then(cache => cache.addAll(files));
+      })
+      .then(() => self.skipWaiting())
+      .catch(err => {
+        console.warn('Pre-cache failed, will cache on fetch:', err);
+        self.skipWaiting();
+      })
   );
 });
 
-// Activate: clean up old caches
+// Activate: clean up old caches, then claim clients
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -30,51 +30,65 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: network-first strategy with cache fallback
-// This ensures users get fresh content when online, but can still
-// use the app when offline.
+// Helper: is this a hashed (immutable) build asset?
+function isHashedAsset(url) {
+  return /\.[a-f0-9]{8,20}\.(js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico|wasm)$/i.test(url);
+}
+
+// Fetch handler with two strategies:
+//  - Cache-first for hashed/immutable assets (JS bundles, CSS, etc.)
+//  - Network-first for everything else (index.html, manifest, etc.)
 self.addEventListener('fetch', event => {
   const request = event.request;
 
   // Only handle GET requests
   if (request.method !== 'GET') return;
 
-  // Skip cross-origin requests (e.g. tile servers, external APIs)
+  // Skip cross-origin requests (tile servers, external CDNs, etc.)
   if (!request.url.startsWith(self.location.origin)) return;
 
-  event.respondWith(
-    fetch(request)
-      .then(response => {
-        // Don't cache bad responses
-        if (!response || response.status !== 200 || response.type === 'opaque') {
+  if (isHashedAsset(request.url)) {
+    // Cache-first: hashed filenames are immutable, no need to re-fetch
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached;
+        return fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
           return response;
-        }
-
-        // Clone and cache the good response
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(request, responseToCache);
         });
-
-        return response;
       })
-      .catch(() => {
-        // Network failed — try the cache
-        return caches.match(request).then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
+    );
+  } else {
+    // Network-first: always try fresh content, fall back to cache
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
           }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then(cached => {
+            if (cached) return cached;
 
-          // For navigation requests, fall back to index.html (SPA routing)
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
+            // SPA routing: serve index.html for navigation requests
+            if (request.mode === 'navigate') {
+              return caches.match(new Request('./')).then(indexResponse => {
+                return indexResponse || caches.match(new Request('./index.html'));
+              });
+            }
 
-          return new Response('Offline', {
-            status: 503,
-            statusText: 'Service Unavailable'
+            return new Response('Offline', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
           });
-        });
-      })
-  );
+        })
+    );
+  }
 });

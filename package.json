@@ -1,6 +1,6 @@
 {
   "name": "gcp-editor-pro",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "author": {
     "name": "UAV4GEO",
     "email": "hello@uav4geo.com",
@@ -54,8 +54,8 @@
     "postinstall": "patch-package",
     "electron": "electron .",
     "electron-build": "ng build --prod --base-href ./",
-    "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/",
-    "web-build": "ng build --prod --base-href ./",
+    "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/ && node scripts/generate-cache-list.js",
+    "web-build": "ng build --prod --base-href ./ && node scripts/generate-cache-list.js",
     "dist": "./node_modules/.bin/electron-builder"
   },
   "private": true,

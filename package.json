@@ -54,7 +54,7 @@
     "postinstall": "patch-package",
     "electron": "electron .",
     "electron-build": "ng build --prod --base-href ./",
-    "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/ && node scripts/generate-cache-list.js",
+    "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/",
     "web-build": "ng build --prod --base-href ./ && node scripts/generate-cache-list.js",
     "dist": "./node_modules/.bin/electron-builder"
   },

@@ -20,11 +20,19 @@ Amazingly Fast and Simple Ground Control Points Interface for [OpenDroneMap](htt
 
 ## Installation
 
-The easiest, most convenient way to run the software is to [download the prebuilt releases](https://uav4geo.com/software/gcpeditorpro), which can be downloaded freely for evaluation. 
+The easiest, most convenient way to run the software is to visit https://gcp.uav4geo.com which provides a prebuilt version of the software.
 
-You will need to [purchase a license](https://uav4geo.com/software/gcpeditorpro#buy) to unlock the prebuild releases after evaluation. Your purchase helps support the development of the software ❤
+You will need to [purchase a license](https://uav4geo.com/software/gcpeditorpro#buy) to use the prebuilt version. With your purchase you're helping to support the development of the software ❤
 
 If you don't want to pay for a license, you can compile the software from sources (see instructions below). If you choose to compile from sources, you are free to use, copy, distribute and modify the software, provided that you are the **only** user of the software. See the terms of the [Fair Source License](https://github.com/uav4geo/GCPEditorPro/blob/master/LICENSE) for details.
+
+## Offline Use
+
+The software can be installed locally and used in offline environments. To do that, if your browser supports the installation of progressive web apps (e.g. Chrome), simply open https://gcp.uav4geo.com and press the "Install GCP Editor Pro" button:
+
+<img width="1161" height="375" alt="Image" src="https://github.com/user-attachments/assets/b130dcb5-9222-46b8-8165-6a2cbc48a98e" />
+
+Once installed you should be able to use the app even without internet.
 
 ## Compile From Sources
 

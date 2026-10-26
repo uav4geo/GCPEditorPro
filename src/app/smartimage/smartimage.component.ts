@@ -1,17 +1,16 @@
-import { Component, OnInit, Output, EventEmitter, Input, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
-import * as Panzoom from '@panzoom/panzoom';
-import { fromEvent, timer, TimeoutError } from 'rxjs';
+import { Component, Output, EventEmitter, Input, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CoordsXY } from '../../shared/common';
+
+const MAX_SCALE = 300;
+const WHEEL_STEP = Math.exp(0.7 / 3);
+const DRAG_THRESHOLD = 3;
 
 @Component({
     selector: 'app-smartimage',
     templateUrl: './smartimage.component.html',
     styleUrls: ['./smartimage.component.scss']
 })
-export class SmartimageComponent implements OnInit, AfterViewInit {
-    showMessage: boolean;
-
-    constructor() { }
+export class SmartimageComponent implements AfterViewInit, OnDestroy {
 
     @Input()
     get pinLocation() {
@@ -20,195 +19,247 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
 
     set pinLocation(val) {
         this.pinLocationValue = val;
-        this.syncPinPosition();
+        this.render();
         this.pinLocationChange.emit(this.pinLocationValue);
     }
 
     @Output() public pin = new EventEmitter();
     @Input() public src: string;
+
+    @Input()
+    get crosshair() {
+        return this.crosshairValue;
+    }
+
+    set crosshair(val) {
+        this.crosshairValue = val;
+        this.render();
+    }
+
+    crosshairValue = false;
+
+    @Input()
+    get size() {
+        return this.sizeValue;
+    }
+
+    set size(val) {
+        this.sizeValue = val;
+        this.layout();
+    }
+
+    sizeValue = 320;
     @ViewChild('img') img: ElementRef;
-    @ViewChild('pin') pinDiv: ElementRef;
+    @ViewChild('svg') svg: ElementRef;
+    @ViewChild('image') image: ElementRef;
+    @ViewChild('pin') pinGroup: ElementRef;
+    @ViewChild('cross') crossGroup: ElementRef;
     @ViewChild('msg') msgDiv: ElementRef;
-
-    pinLocationValue: CoordsXY = null;
-    onSmartImagesLayoutChanged = null;
-
-    private panzoom: Panzoom.PanzoomObject = null;
 
     @Output()
     pinLocationChange = new EventEmitter<CoordsXY>();
 
-    private wheelMessageTimeout: any;
+    pinLocationValue: CoordsXY = null;
 
-    @HostListener('window:resize', ['$event'])
-    onResize(event) {
-        this.syncPinPosition();
-    }
+    private naturalWidth = 0;
+    private naturalHeight = 0;
+    private displayWidth = 0;
+    private displayHeight = 0;
+    private view = { x: 0, y: 0, w: 0, h: 0 };
+
+    private pointer: { id: number, x: number, y: number, panning: boolean } = null;
+    private hover: { x: number, y: number } = null;
+    private wheelMessageTimeout: any;
+    private listeners: [string, any][] = [];
 
     ngAfterViewInit(): void {
-        this.panzoom = Panzoom.default(this.img.nativeElement, {
-            maxScale: 300,
-            cursor: 'default',
-            animate: false,
-            canvas: true,
-            step: 0.7,
-            overflow: "visible"
+        const svg = this.svg.nativeElement;
+
+        this.listen('pointerdown', (e: PointerEvent) => {
+            if (e.button !== 0 || this.pointer !== null) return;
+            this.pointer = { id: e.pointerId, x: e.clientX, y: e.clientY, panning: false };
+            svg.setPointerCapture(e.pointerId);
         });
 
-        const click = fromEvent(this.img.nativeElement, 'click');
-
-        let start = Date.now();
-
-        let timeout: any = null;
-
-        const panzoomchange = fromEvent(this.img.nativeElement, 'panzoomchange');
-
-        panzoomchange.subscribe((e: CustomEvent) => {
-
-            if (this.pinLocation != null) {
-
-                this.pinDiv.nativeElement.style.display = 'none';
-
-                if (timeout !== null) {
-                    clearTimeout(timeout);
-                    timeout = null;
-                }
-
-                timeout = setTimeout(() => {
-                    this.syncPinPosition();
-                    this.pinDiv.nativeElement.style.display = 'block';
-                }, 250);
-            }
-
-            start = Date.now();
-
-        });
-
-        click.subscribe((e: MouseEvent) => {
-
-            const millis = Date.now() - start;
-
-            start = Date.now();
-
-            if (millis > 250) {
-
-                this.pinLocation = this.getPos(e);
-
-                const rect = this.img.nativeElement.parentElement.getClientRects()[0];
-
-                this.pinDiv.nativeElement.style.left = (e.clientX - rect.left - this.pinDiv.nativeElement.width / 2) + 'px';
-                this.pinDiv.nativeElement.style.top = (e.clientY - rect.top - this.pinDiv.nativeElement.height / 2) + 'px';
-
-                this.pin.emit(this.pinLocation);
-
-            }
-        });
-
-        // this.img.nativeElement.parentElement.addEventListener('wheel', this.panzoom.zoomWithWheel);
-        this.img.nativeElement.parentElement.addEventListener('wheel', (e: WheelEvent) => {
-            if (!e.shiftKey) {
-                this.displayWheelMessage();
-
+        this.listen('pointermove', (e: PointerEvent) => {
+            this.hover = { x: e.clientX, y: e.clientY };
+            const p = this.pointer;
+            if (p === null || p.id !== e.pointerId) {
+                this.renderCrosshair();
                 return;
             }
-            // Panzoom will automatically use `deltaX` here instead
-            // of `deltaY`. On a mac, the shift modifier usually
-            // translates to horizontal scrolling, but Panzoom assumes
-            // the desired behavior is zooming.
-            this.panzoom.zoomWithWheel(e);
+            if (!p.panning && Math.hypot(e.clientX - p.x, e.clientY - p.y) < DRAG_THRESHOLD) return;
+            if (!p.panning) {
+                p.panning = true;
+                svg.classList.add('panning');
+            }
+            const ctm = svg.getScreenCTM();
+            this.view.x -= (e.clientX - p.x) / ctm.a;
+            this.view.y -= (e.clientY - p.y) / ctm.d;
+            p.x = e.clientX;
+            p.y = e.clientY;
+            this.clampView();
+            this.render();
         });
-        this.img.nativeElement.parentElement.addEventListener('mouseleave', () => {
+
+        this.listen('pointerup', (e: PointerEvent) => {
+            const p = this.pointer;
+            if (p === null || p.id !== e.pointerId) return;
+            this.pointer = null;
+            svg.classList.remove('panning');
+            if (p.panning || this.naturalWidth === 0) return;
+
+            const pos = this.toImage(e.clientX, e.clientY);
+            pos.x = Math.min(Math.max(pos.x, 0), this.naturalWidth);
+            pos.y = Math.min(Math.max(pos.y, 0), this.naturalHeight);
+
+            this.pinLocation = pos;
+            this.pin.emit(this.pinLocation);
+        });
+
+        this.listen('pointercancel', () => {
+            this.pointer = null;
+            svg.classList.remove('panning');
+        });
+
+        this.listen('wheel', (e: WheelEvent) => {
+            if (!e.shiftKey) {
+                this.displayWheelMessage();
+                return;
+            }
+            e.preventDefault();
+            clearTimeout(this.wheelMessageTimeout);
+            this.msgDiv.nativeElement.style.transitionDuration = '0s';
             this.msgDiv.nativeElement.style.opacity = 0;
-        })
+            if (this.naturalWidth === 0) return;
 
-        this.syncPinPosition();
+            const delta = e.deltaY || e.deltaX;
+            if (delta === 0) return;
 
-        this.onSmartImagesLayoutChanged = () => {
-            setTimeout(this.syncPinPosition.bind(this), 250);
-        };
-        window.addEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
+            const scale = this.naturalWidth / this.view.w;
+            const newScale = Math.min(MAX_SCALE, Math.max(1, delta < 0 ? scale * WHEEL_STEP : scale / WHEEL_STEP));
+            const p = this.toImage(e.clientX, e.clientY);
+            const ratio = scale / newScale;
+
+            this.view.x = p.x - (p.x - this.view.x) * ratio;
+            this.view.y = p.y - (p.y - this.view.y) * ratio;
+            this.view.w *= ratio;
+            this.view.h *= ratio;
+            this.clampView();
+            this.render();
+        });
+
+        this.listen('mouseleave', () => {
+            this.msgDiv.nativeElement.style.opacity = 0;
+        });
+
+        this.listen('pointerleave', () => {
+            this.hover = null;
+            this.renderCrosshair();
+        });
     }
 
     ngOnDestroy() {
-        if (this.onSmartImagesLayoutChanged) window.removeEventListener("smartImagesLayoutChanged", this.onSmartImagesLayoutChanged);
-    }
-
-    private displayWheelMessage() {
+        const svg = this.svg.nativeElement;
+        this.listeners.forEach(([type, fn]) => svg.removeEventListener(type, fn));
         clearTimeout(this.wheelMessageTimeout);
-        this.msgDiv.nativeElement.style.opacity = 1;
-        this.wheelMessageTimeout = setTimeout(() => {
-            this.msgDiv.nativeElement.style.opacity = 0;
-        }, 2000);
     }
 
-    private syncPinPosition() {
-        if (this.pinLocationValue === null || this.panzoom === null) {
-            return;
-        }
-        const location = this.getPinLocation();
-        if (!location) return;
+    public onImageLoad() {
+        const img = this.img.nativeElement;
+        this.naturalWidth = img.naturalWidth;
+        this.naturalHeight = img.naturalHeight;
+        this.view = { x: 0, y: 0, w: this.naturalWidth, h: 0 };
 
-        this.pinDiv.nativeElement.style.left = (location.x - this.pinDiv.nativeElement.width / 2) + 'px';
-        this.pinDiv.nativeElement.style.top = (location.y - this.pinDiv.nativeElement.height / 2) + 'px';
-        this.pinDiv.nativeElement.style.display = 'block';
+        const image = this.image.nativeElement;
+        image.setAttribute('width', this.naturalWidth);
+        image.setAttribute('height', this.naturalHeight);
+        image.setAttribute('href', img.currentSrc || img.src);
+
+        this.layout();
+    }
+
+    private layout() {
+        if (!this.svg || this.naturalWidth === 0) return;
+
+        const fit = Math.min(1, this.sizeValue / this.naturalWidth, this.sizeValue / this.naturalHeight);
+        this.displayWidth = Math.max(1, Math.round(this.naturalWidth * fit));
+        this.displayHeight = Math.max(1, Math.round(this.naturalHeight * fit));
+        this.view.h = this.view.w * this.displayHeight / this.displayWidth;
+
+        const svg = this.svg.nativeElement;
+        svg.setAttribute('width', this.displayWidth);
+        svg.setAttribute('height', this.displayHeight);
+
+        this.clampView();
+        this.render();
     }
 
     public clearPin(){
         this.pinLocation = null;
-        this.pinDiv.nativeElement.style.display = 'none';
     }
 
-    private getPinLocation(): CoordsXY {
+    private listen(type: string, fn: any) {
+        this.svg.nativeElement.addEventListener(type, fn, type === 'wheel' ? { passive: false } : undefined);
+        this.listeners.push([type, fn]);
+    }
 
-        if (this.panzoom === null) {
+    private toImage(clientX: number, clientY: number): CoordsXY {
+        const svg = this.svg.nativeElement;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+        return { x: p.x, y: p.y };
+    }
+
+    private clampView() {
+        this.view.x = Math.min(Math.max(this.view.x, -this.view.w / 2), this.naturalWidth - this.view.w / 2);
+        this.view.y = Math.min(Math.max(this.view.y, -this.view.h / 2), this.naturalHeight - this.view.h / 2);
+    }
+
+    private render() {
+        if (!this.svg || this.naturalWidth === 0) return;
+
+        const v = this.view;
+        this.svg.nativeElement.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+        this.image.nativeElement.style.imageRendering = this.displayWidth * window.devicePixelRatio / v.w >= 1 ? 'pixelated' : 'auto';
+
+        const g = this.pinGroup.nativeElement;
+        if (this.pinLocationValue) {
+            const s = v.w / this.displayWidth;
+            g.setAttribute('transform', `translate(${this.pinLocationValue.x} ${this.pinLocationValue.y}) scale(${s})`);
+            g.style.display = '';
+        } else {
+            g.style.display = 'none';
+        }
+
+        this.renderCrosshair();
+    }
+
+    private renderCrosshair() {
+        if (!this.crossGroup) return;
+
+        const g = this.crossGroup.nativeElement;
+        if (!this.crosshairValue || this.hover === null || this.naturalWidth === 0) {
+            g.style.display = 'none';
             return;
         }
 
-        const zoom = this.panzoom.getScale();
-
-        const rect = this.img.nativeElement.getClientRects()[0];
-        if (!rect) return;
-        const parentRect = this.img.nativeElement.parentElement.getClientRects()[0];
-
-        const naturalWidth = this.img.nativeElement.naturalWidth;
-        const naturalHeight = this.img.nativeElement.naturalHeight;
-        
-        const width = rect.width / zoom; //this.img.nativeElement.width;
-        const height = rect.height / zoom; //this.img.nativeElement.height;
-        
-        const scaleX = width / naturalWidth;
-        const scaleY = height / naturalHeight;
-
-        const left = (rect.left - parentRect.left) + this.pinLocationValue.x * scaleX * zoom;
-        const top = (rect.top - parentRect.top) + this.pinLocationValue.y * scaleY * zoom;
-
-        return { x: left, y: top };
+        const v = this.view;
+        const p = this.toImage(this.hover.x, this.hover.y);
+        const d = `M${p.x} ${v.y}V${v.y + v.h}M${v.x} ${p.y}H${v.x + v.w}`;
+        for (const path of g.children) path.setAttribute('d', d);
+        g.style.display = '';
     }
 
-    ngOnInit(): void {
-    }
-
-    private getPos(e: MouseEvent): CoordsXY {
-        const zoom = this.panzoom.getScale();
-
-        const rect = this.img.nativeElement.getClientRects()[0];
-        const naturalWidth = this.img.nativeElement.naturalWidth;
-        const naturalHeight = this.img.nativeElement.naturalHeight;
-        const width = rect.width / zoom; //this.img.nativeElement.width;
-        const height = rect.height / zoom; //this.img.nativeElement.height;
-        const scaleX = width / naturalWidth;
-        const scaleY = height / naturalHeight;
-
-        const relx = e.clientX - rect.left;
-        const rely = e.clientY - rect.top;
-
-        const x = relx / zoom;
-        const y = rely / zoom;
-
-        const realX = x / scaleX;
-        const realY = y / scaleY;
-
-        return { x: realX, y: realY };
+    private displayWheelMessage() {
+        clearTimeout(this.wheelMessageTimeout);
+        this.msgDiv.nativeElement.style.transitionDuration = '';
+        this.msgDiv.nativeElement.style.opacity = 1;
+        this.wheelMessageTimeout = setTimeout(() => {
+            this.msgDiv.nativeElement.style.opacity = 0;
+        }, 2000);
     }
 
 }

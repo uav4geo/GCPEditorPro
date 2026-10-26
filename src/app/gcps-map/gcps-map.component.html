@@ -31,3 +31,42 @@
             icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
 
 </div>
+
+<ng-template #coordsModal let-modal>
+    <form (ngSubmit)="addGcpByCoords(modal)">
+        <div class="modal-header">
+            <h5 class="modal-title" id="coords-modal-title">Add GCP by Coordinates</h5>
+            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="text-muted mb-3">Coordinate reference system: <strong>{{projectionName()}}</strong></p>
+            <div class="form-group">
+                <label for="newGcpName">Name</label>
+                <input type="text" class="form-control" id="newGcpName" name="name" [(ngModel)]="newGcp.name" (input)="newGcpError = null">
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label for="newGcpX">X ({{isGeographic() ? 'Longitude' : 'Easting'}})</label>
+                    <input type="text" inputmode="decimal" class="form-control" id="newGcpX" name="x" [(ngModel)]="newGcp.x" (input)="newGcpError = null" ngbAutofocus>
+                </div>
+                <div class="form-group col">
+                    <label for="newGcpY">Y ({{isGeographic() ? 'Latitude' : 'Northing'}})</label>
+                    <input type="text" inputmode="decimal" class="form-control" id="newGcpY" name="y" [(ngModel)]="newGcp.y" (input)="newGcpError = null">
+                </div>
+                <div class="form-group col">
+                    <label for="newGcpZ">Z (Elevation)</label>
+                    <input type="text" inputmode="decimal" class="form-control" id="newGcpZ" name="z" [(ngModel)]="newGcp.z" (input)="newGcpError = null" placeholder="Optional">
+                </div>
+            </div>
+            <div class="alert alert-danger mb-0" *ngIf="newGcpError">
+                <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>{{newGcpError}}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-dark" (click)="modal.dismiss()">Cancel</button>
+            <button type="submit" class="btn btn-primary"><fa-icon icon="plus" class="mr-2"></fa-icon>Add GCP</button>
+        </div>
+    </form>
+</ng-template>

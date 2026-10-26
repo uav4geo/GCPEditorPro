@@ -4,7 +4,7 @@
             <div class="form-row mt-2 mb-0">
                 <div class="col col-xl-4 col-lg-6 col-xs-12">
                     <div class="input-group" placement="bottom" ngbTooltip='EPSG code or a PROJ string'>
-                        <input type="text" [(ngModel)]="epsgProj4" class="form-control"
+                        <input type="text" [(ngModel)]="epsgProj4" class="form-control" [class.is-invalid]="epsgInvalid"
                         (input)="epsgProj4change($event.target.value)" (keyup.enter)="next()" id="inlineFormInputGroup"
                         placeholder="EPSG:4326">
                         <div class="input-group-append" data-toggle="tooltip">
@@ -26,6 +26,8 @@
 
 <div class="fixed-bottom bg-white d-flex align-items-center justify-content-end">
     <app-license-info></app-license-info>
-    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">Go to next step<fa-icon
-            icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
+    <button class="btn btn-primary mr-3 my-3" (click)="next()">
+        <ng-container *ngIf="!epsgWarning">Go to next step<fa-icon icon="long-arrow-alt-right" class="ml-2"></fa-icon></ng-container>
+        <ng-container *ngIf="epsgWarning">Check your EPSG code<fa-icon icon="exclamation-triangle" class="ml-2"></fa-icon></ng-container>
+    </button>
 </div>

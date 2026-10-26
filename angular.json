@@ -54,6 +54,11 @@
                 "glob": "**/*",
                 "input": "./node_modules/leaflet/dist/images",
                 "output": "leaflet/"
+              },
+              {
+                "glob": "geotiff.js",
+                "input": "./node_modules/geotiff/dist-browser",
+                "output": "geotiff/"
               }
             ],
             "styles": [

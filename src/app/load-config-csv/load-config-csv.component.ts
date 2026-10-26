@@ -120,6 +120,7 @@ export class LoadConfigCsvComponent implements OnInit {
         this.csvParseResult.descriptor.projection = projection;
 
         this.storageService.gcps = this.csvParseResult.descriptor.gcps;
+        this.storageService.mapView = null;
         this.storageService.projection = this.csvParseResult.descriptor.projection;
         this.storageService.imageGcps = [];
         this.storageService.prevNames = {};

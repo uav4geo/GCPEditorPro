@@ -28,6 +28,11 @@
             </div>
         </div>
     </div>
+    <div class="col-md-auto">
+        <button title="Toggle crosshair" class="btn" [ngClass]="{'btn-primary': showCrosshair, 'btn-light': !showCrosshair}" type="button" (click)="toggleCrosshair()">
+            <fa-icon icon="crosshairs"></fa-icon>
+        </button>
+    </div>
     <div class="col-md-auto" (click)="$event.stopPropagation()">
         <div class="columns">
             <button title="Number of images displayed in each row" class="btn btn-light" type="button" (click)="toggleColumnsSettings()">
@@ -67,7 +72,7 @@
                     </div>
                 </a>
             </span>
-            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation" [size]="imageSize"
+            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation" [size]="imageSize" [crosshair]="showCrosshair"
                 (pin)="pin($event, desc)" style="display: block; overflow: hidden">
             </app-smartimage>
             <div *ngIf="desc.imageUrl !== null && !desc.displayUrl" class="p-5 text-muted">

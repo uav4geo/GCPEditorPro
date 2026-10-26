@@ -1,4 +1,5 @@
-import { Component, OnInit, ApplicationRef, ViewEncapsulation, NgZone  } from '@angular/core';
+import { Component, OnInit, ApplicationRef, ViewEncapsulation, NgZone, ViewChild, TemplateRef } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StorageService } from '../storage.service';
 import { GCP } from '../gcps-utils.service';
 import { Router } from '@angular/router';
@@ -8,6 +9,8 @@ import proj4 from "proj4";
 import Autolayers from './Leaflet.Autolayers/leaflet-autolayers';
 import SimpleMarkers from './Leaflet.SimpleMarkers/Control.SimpleMarkers';
 import Geocoder from './Leaflet.Geocoder/Control.Geocoder';
+import { icon as faIcon } from '@fortawesome/fontawesome-svg-core';
+import { faExpand, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 
 import Basemaps from './Basemaps';
 
@@ -26,13 +29,17 @@ export class GcpsMapComponent implements OnInit {
     private markers: L.FeatureGroup;
     private map: L.Map;
 
+    @ViewChild('coordsModal') coordsModal: TemplateRef<any>;
+    public newGcp = { name: '', x: '', y: '', z: '' };
+    public newGcpError: string = null;
+
     // Set the initial set of displayed layers (we could also use the leafletLayers input binding for this)
     options = {
         zoom: 7,
         zoomControl: false
     };
 
-    constructor(private storage: StorageService, private router: Router, private appRef: ApplicationRef, private ngZone: NgZone) {
+    constructor(private storage: StorageService, private router: Router, private appRef: ApplicationRef, private ngZone: NgZone, private modalService: NgbModal) {
         if (typeof storage.gcps === 'undefined' ||
             typeof storage.imageGcps === 'undefined' ||
             typeof storage.projection === 'undefined') {
@@ -154,23 +161,27 @@ export class GcpsMapComponent implements OnInit {
         this.checkIsReady();
 
         if (adjustMapBounds){
-            let bounds = this.markers.getBounds();
-
-            if (!bounds.isValid()){
-                // A famous default place...
-                bounds = L.latLngBounds(
-                        L.latLng(46.8423257894203, -91.9943240825542),
-                        L.latLng(46.84267620076861, -91.9939864695641),
-                    );
-            }
-    
-            this.map.fitBounds(bounds, {
-                maxZoom: 20,
-                animate: true
-            });
+            this.fitDefaultBounds();
         }
 
         this.appRef.tick();
+    }
+
+    private fitDefaultBounds(): void {
+        let bounds = this.markers.getBounds();
+
+        if (!bounds.isValid()){
+            // A famous default place...
+            bounds = L.latLngBounds(
+                    L.latLng(46.8423257894203, -91.9943240825542),
+                    L.latLng(46.84267620076861, -91.9939864695641),
+                );
+        }
+
+        this.map.fitBounds(bounds, {
+            maxZoom: 20,
+            animate: true
+        });
     }
 
     private checkIsReady(): void {
@@ -254,15 +265,8 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
                 const {lat, lng} = latlng;
                 const [x, y] = proj4(this.storage.projection.eq, [lng, lat]);
 
-                let counter = this.storage.gcps.length;
-                let name = 'GCP-' + (counter + 1).toString();
-                while (this.storage.gcps.some((gcp) => gcp.name === name)) {
-                    counter++;
-                    name = 'GCP-' + (counter + 1).toString();
-                }
-
                 this.storage.gcps.push({
-                    name: name,
+                    name: this.nextGcpName(),
                     northing:y,
                     easting: x,
                     elevation: NaN
@@ -276,12 +280,124 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
         L.control.zoom({
             position: 'bottomleft'
         }).addTo(map);
+
+        const FitControl = L.Control.extend({
+            onAdd: () => {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fit');
+                const link = L.DomUtil.create('a', '', container) as HTMLAnchorElement;
+                link.href = '#';
+                link.title = 'Fit map to GCPs';
+                link.setAttribute('role', 'button');
+                link.innerHTML = faIcon(faExpand).html.join('');
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(link, 'click', e => {
+                    L.DomEvent.preventDefault(e);
+                    this.fitDefaultBounds();
+                });
+                return container;
+            }
+        });
+        new FitControl({ position: 'bottomleft' }).addTo(map);
+
+        const CoordsControl = L.Control.extend({
+            onAdd: () => {
+                const button = L.DomUtil.create('div', 'add_marker_control add_coords_control');
+                button.title = 'Add GCP by Coordinates';
+                button.innerHTML = faIcon(faKeyboard).html.join('');
+                L.DomEvent.disableClickPropagation(button);
+                L.DomEvent.on(button, 'click', e => {
+                    L.DomEvent.preventDefault(e);
+                    this.ngZone.run(() => this.openCoordsModal());
+                });
+                return button;
+            }
+        });
+        new CoordsControl({ position: 'topleft' }).addTo(map);
       
         this.markers = L.featureGroup().addTo(map);
 
+        map.on('moveend', () => {
+            const c = map.getCenter();
+            this.storage.mapView = { center: { lat: c.lat, lng: c.lng }, zoom: map.getZoom() };
+        });
+
         setTimeout(() => {
-            this.updateGcps(true);
+            const view = this.storage.mapView;
+            if (view) {
+                this.updateGcps();
+                map.setView([view.center.lat, view.center.lng], view.zoom, { animate: false });
+            } else {
+                this.updateGcps(true);
+            }
         }, 1);
+    }
+
+    private nextGcpName(): string {
+        let counter = this.storage.gcps.length;
+        let name = 'GCP-' + (counter + 1).toString();
+        while (this.storage.gcps.some((gcp) => gcp.name === name)) {
+            counter++;
+            name = 'GCP-' + (counter + 1).toString();
+        }
+        return name;
+    }
+
+    public isGeographic(): boolean {
+        return /\+proj=longlat/.test(this.storage.projection.eq);
+    }
+
+    public projectionName(): string {
+        return this.storage.projection.to_str();
+    }
+
+    openCoordsModal(): void {
+        this.newGcp = { name: this.nextGcpName(), x: '', y: '', z: '' };
+        this.newGcpError = null;
+        this.modalService.open(this.coordsModal, { ariaLabelledBy: 'coords-modal-title' });
+    }
+
+    addGcpByCoords(modal): void {
+        const name = String(this.newGcp.name).trim();
+        const x = parseFloat(String(this.newGcp.x));
+        const y = parseFloat(String(this.newGcp.y));
+        const zStr = String(this.newGcp.z).trim();
+        const z = zStr === '' ? NaN : parseFloat(zStr);
+
+        if (name === '') {
+            this.newGcpError = 'Please enter a name.';
+            return;
+        }
+        if (!/^[A-Za-z0-9-]+$/.test(name)) {
+            this.newGcpError = 'The name can only contain letters, numbers and dashes.';
+            return;
+        }
+        if (this.storage.gcps.some(gcp => gcp.name === name)) {
+            this.newGcpError = `A GCP named "${name}" already exists.`;
+            return;
+        }
+        if (!isFinite(x) || !isFinite(y) || (zStr !== '' && !isFinite(z))) {
+            this.newGcpError = 'Please enter valid coordinates.';
+            return;
+        }
+
+        const [lng, lat] = proj4(this.storage.projection.eq, 'EPSG:4326', [x, y]);
+        if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+            this.newGcpError = `These coordinates are not valid in ${this.projectionName()}.`;
+            return;
+        }
+
+        this.storage.gcps.push({
+            name: name,
+            northing: y,
+            easting: x,
+            elevation: z
+        });
+        this.updateGcps();
+        modal.close();
+
+        const added = this.gcps.find(g => g.gcp.name === name);
+        this.map.setView([lat, lng], Math.max(this.map.getZoom(), 18), { animate: false });
+        if (added) this.select(added);
     }
 
     select(gcp: GcpInfo) {

@@ -205,6 +205,7 @@ export class LoadConfigTxtComponent implements OnInit {
         this.storageService.projection = this.txtParseResult.descriptor.projection;
         this.storageService.imageGcps = this.txtParseResult.descriptor.imageGcps;
         this.storageService.gcps = this.txtParseResult.descriptor.gcps;
+        this.storageService.mapView = null;
         this.storageService.prevNames = {};
         
         this.router.navigateByUrl('/gcps-map');

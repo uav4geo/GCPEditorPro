@@ -1,6 +1,6 @@
 #!/bin/bash
 
-yarn
+npm ci
 rm -fr dist
 npm run plugin-build
 

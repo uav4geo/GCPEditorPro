@@ -19,7 +19,6 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "stats": "webpack-bundle-analyzer dist/gcp-editor-pro/stats-es2015.json",
-    "postinstall": "patch-package",
     "plugin-build": "ng build --prod --base-href ./",
     "web-static-build": "ng build --prod --base-href /static/gcp-editor-pro/",
     "web-build": "ng build --prod --base-href ./ && node scripts/generate-cache-list.js"
@@ -59,7 +58,6 @@
     "leaflet": "^1.6.0",
     "ng-open-cv": "^0.3.1",
     "ngx-papaparse": "^4.0.4",
-    "patch-package": "^6.2.2",
     "proj4": "^2.19.10",
     "rfdc": "^1.1.4",
     "rxjs": "^6.5.5",

@@ -39,6 +39,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public columns: number = 4;
     public showColumnsSettings: boolean = false;
     public imageSize: number = 320;
+    public showCrosshair: boolean = localStorage.getItem("crosshair") !== "0";
 
     @ViewChild('grid') grid: ElementRef;
     private gridObserver = null;
@@ -243,6 +244,11 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
     public closeFilterSettings(){
         this.showFilterSettings = false;
         this.showColumnsSettings = false;
+    }
+
+    public toggleCrosshair(){
+        this.showCrosshair = !this.showCrosshair;
+        localStorage.setItem("crosshair", this.showCrosshair ? "1" : "0");
     }
 
     public toggleColumnsSettings(){

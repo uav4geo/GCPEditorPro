@@ -36,6 +36,7 @@ export class LoadConfigEmptyComponent implements OnInit {
 
         const go = () => {
             this.storageService.gcps = [];
+            this.storageService.mapView = null;
             this.storageService.projection = this.projection;
             this.storageService.imageGcps = [];
             this.storageService.prevNames = {};

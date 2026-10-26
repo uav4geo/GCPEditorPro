@@ -19,6 +19,7 @@ export class StorageService {
     public images: ImageInfo[] = [];
     public license: LicenseInfo;
     public prevNames: object = {};
+    public mapView: { center: { lat: number, lng: number }, zoom: number } = null;
 
     private displayCache: { name: string, url: Promise<string> }[] = [];
 

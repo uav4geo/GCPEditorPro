@@ -27,6 +27,18 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
     @Input() public src: string;
 
     @Input()
+    get crosshair() {
+        return this.crosshairValue;
+    }
+
+    set crosshair(val) {
+        this.crosshairValue = val;
+        this.render();
+    }
+
+    crosshairValue = false;
+
+    @Input()
     get size() {
         return this.sizeValue;
     }
@@ -41,6 +53,7 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
     @ViewChild('svg') svg: ElementRef;
     @ViewChild('image') image: ElementRef;
     @ViewChild('pin') pinGroup: ElementRef;
+    @ViewChild('cross') crossGroup: ElementRef;
     @ViewChild('msg') msgDiv: ElementRef;
 
     @Output()
@@ -55,6 +68,7 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
     private view = { x: 0, y: 0, w: 0, h: 0 };
 
     private pointer: { id: number, x: number, y: number, panning: boolean } = null;
+    private hover: { x: number, y: number } = null;
     private wheelMessageTimeout: any;
     private listeners: [string, any][] = [];
 
@@ -68,8 +82,12 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
         });
 
         this.listen('pointermove', (e: PointerEvent) => {
+            this.hover = { x: e.clientX, y: e.clientY };
             const p = this.pointer;
-            if (p === null || p.id !== e.pointerId) return;
+            if (p === null || p.id !== e.pointerId) {
+                this.renderCrosshair();
+                return;
+            }
             if (!p.panning && Math.hypot(e.clientX - p.x, e.clientY - p.y) < DRAG_THRESHOLD) return;
             if (!p.panning) {
                 p.panning = true;
@@ -130,6 +148,11 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
 
         this.listen('mouseleave', () => {
             this.msgDiv.nativeElement.style.opacity = 0;
+        });
+
+        this.listen('pointerleave', () => {
+            this.hover = null;
+            this.renderCrosshair();
         });
     }
 
@@ -207,6 +230,24 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
         } else {
             g.style.display = 'none';
         }
+
+        this.renderCrosshair();
+    }
+
+    private renderCrosshair() {
+        if (!this.crossGroup) return;
+
+        const g = this.crossGroup.nativeElement;
+        if (!this.crosshairValue || this.hover === null || this.naturalWidth === 0) {
+            g.style.display = 'none';
+            return;
+        }
+
+        const v = this.view;
+        const p = this.toImage(this.hover.x, this.hover.y);
+        const d = `M${p.x} ${v.y}V${v.y + v.h}M${v.x} ${p.y}H${v.x + v.w}`;
+        for (const path of g.children) path.setAttribute('d', d);
+        g.style.display = '';
     }
 
     private displayWheelMessage() {

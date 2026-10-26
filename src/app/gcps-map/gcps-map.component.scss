@@ -16,3 +16,61 @@
 .leaflet-popup{
     min-width: 250px;
 }
+
+.leaflet-touch .leaflet-bar a{
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out{
+    font-size: 20px;
+}
+
+.leaflet-control-fit a{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg.svg-inline--fa{
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.add_marker_control{
+    box-sizing: border-box;
+    padding: 0;
+    background-size: 20px;
+}
+
+.leaflet-control-geocoder .leaflet-control-geocoder-icon{
+    width: 36px;
+    height: 36px;
+    background-size: 28px;
+}
+
+.leaflet-touch .leaflet-control-layers-toggle{
+    background-size: 22px;
+}
+
+.add_coords_control{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: none;
+    color: #333;
+
+    svg.svg-inline--fa{
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.marker_controls .add_marker_control{
+    margin-bottom: 0;
+}
+
+.leaflet-control.add_coords_control{
+    margin-top: 8px;
+}

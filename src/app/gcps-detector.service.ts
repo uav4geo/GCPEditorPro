@@ -48,9 +48,10 @@ export class GcpsDetectorService {
             this.areClassifiersLoaded = true;
         }
 
-        return new Promise<CoordsXY>((resolve, reject) => {
+        // TIFFs need to be converted before they can be loaded in an <img>
+        const url = await this.storage.getDisplayUrl(imgName);
 
-            var url = this.storage.getImageUrl(imgName);
+        return new Promise<CoordsXY>((resolve, reject) => {
 
             const container = this.r2.createElement('div');
             this.r2.setStyle(container, 'position', 'absolute');
@@ -126,6 +127,11 @@ export class GcpsDetectorService {
                 } catch (e) {
                     reject(e);
                 }
+            };
+
+            imgTag.onerror = () => {
+                this.r2.removeChild(this.document.body, container);
+                reject('Cannot load ' + imgName);
             };
         });
 

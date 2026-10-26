@@ -2,7 +2,7 @@
     <div class="col">
         <div class="custom-file">
             <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)"
-                accept="image/*" multiple="true" id="imagesFiles">
+                accept="image/*,.tif,.tiff" multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
                 Select some images, then click on GCP "{{gcp.name}}" in each image.
             </label>
@@ -55,9 +55,13 @@
                     </div>
                 </a>
             </span>
-            <app-smartimage #smartImage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
+            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation"
                 (pin)="pin($event, desc)" style="display: block; overflow: hidden">
             </app-smartimage>
+            <div *ngIf="desc.imageUrl !== null && !desc.displayUrl" class="p-5 text-muted">
+                <span *ngIf="!desc.displayError"><fa-icon icon="cog" [spin]="true" class="mr-2"></fa-icon>Loading image...</span>
+                <span *ngIf="desc.displayError" class="text-danger">{{desc.displayError}}</span>
+            </div>
         </div>
         <div class="alert alert-info mt-2" *ngIf="!isLoading && filterByDistance && rawImages.length > 0 && images.length === 0">
             <fa-icon icon="info-circle" class="mr-3"></fa-icon> No images seem to be within {{filterDistance}} meters of GCP "{{gcp.name}}", try turning off the distance filter or increase the distance radius.
@@ -68,7 +72,7 @@
     <button class="btn btn-primary ml-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
     </button>
-    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [(page)]="page" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
+    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [page]="page" (pageChange)="pageChanged($event)" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
     <button class="btn btn-primary mr-3" (click)="ok()">Save Changes
         <fa-icon icon="save" class="ml-2"></fa-icon>
     </button>

@@ -22,7 +22,7 @@
                 <fa-icon icon="info-circle" class="mr-2"></fa-icon>The GCP file has been successfully loaded. Now select the images using the box below.
             </div>-->
             <div class="custom-file mt-3" *ngIf="descriptor !== null">
-                <input type="file" class="custom-file-input" (change)="imagesSelected($event)" accept="image/*" multiple="true"
+                <input type="file" class="custom-file-input" (change)="imagesSelected($event)" accept="image/*,.tif,.tiff" multiple="true"
                     id="images">
                 <label class="custom-file-label mb-0" for="images">
                     <span *ngIf="images == null">Select the images referenced in the GCP file</span>

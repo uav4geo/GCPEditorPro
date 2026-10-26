@@ -4,6 +4,10 @@ import { base64ArrayBuffer } from 'src/shared/utils';
 import { validate, LicenseInfo, DemoLicense, DevLicense } from './licenser';
 import exifr from 'exifr';
 import { GPSCoords } from '../shared/common';
+import { TiffRendererService, isTiff } from './tiff-renderer.service';
+
+// Max number of converted (TIFF) images kept in memory
+const DISPLAY_CACHE_SIZE = 30;
 
 @Injectable({
     providedIn: 'root'
@@ -17,12 +21,17 @@ export class StorageService {
     public license: LicenseInfo;
     public prevNames: object = {};
 
+    // Converted images for files that the browser cannot display (TIFFs), most recently used last
+    private displayCache: { name: string, url: Promise<string> }[] = [];
+
     public saveImage(image: ImageInfo): ImageInfo {
         const match = this.images.filter(item => item.name === image.name);
         if (match.length === 0) {
             this.images.push(image);
         } else {
             match[0].url = image.url;
+            match[0].file = image.file;
+            this.evictDisplayUrl(image.name);
         }
         return image;
     }
@@ -31,6 +40,7 @@ export class StorageService {
         const match = this.images.find(item => item.name === imageName);
         if (match) {
             this.images.splice(this.images.indexOf(match), 1);
+            this.evictDisplayUrl(imageName);
         }
 
         this.imageGcps = this.imageGcps.filter(item => item.imgName !== imageName);
@@ -49,6 +59,38 @@ export class StorageService {
         } else {
             return match[0].url;
         }
+    }
+
+    // URL of an image that the browser can display (TIFFs are converted on demand)
+    public getDisplayUrl(name: string): Promise<string> {
+        const image = this.images.find(item => item.name === name);
+        if (!image) return Promise.resolve(null);
+        if (!isTiff(image.file)) return Promise.resolve(image.url);
+
+        let entry = this.displayCache.find(item => item.name === name);
+        if (entry) {
+            this.displayCache.splice(this.displayCache.indexOf(entry), 1);
+        } else {
+            entry = { name, url: this.tiffRenderer.render(image.file) };
+            entry.url.catch(e => {
+                console.error('Cannot decode ' + name, e);
+                this.evictDisplayUrl(name);
+            });
+        }
+        this.displayCache.push(entry);
+
+        while (this.displayCache.length > DISPLAY_CACHE_SIZE) {
+            this.evictDisplayUrl(this.displayCache[0].name);
+        }
+
+        return entry.url;
+    }
+
+    private evictDisplayUrl(name: string) {
+        const entry = this.displayCache.find(item => item.name === name);
+        if (!entry) return;
+        this.displayCache.splice(this.displayCache.indexOf(entry), 1);
+        entry.url.then(url => (window.URL ? URL : webkitURL).revokeObjectURL(url), () => {});
     }
 
     public hasLicense(): boolean {
@@ -77,7 +119,7 @@ export class StorageService {
         }
     }
 
-    constructor() { }
+    constructor(private tiffRenderer: TiffRendererService) { }
 }
 
 class ImageInfo {
@@ -85,13 +127,13 @@ class ImageInfo {
     constructor(file: File, url: string) {
         this.name = file.name;
         this.url = url;
-        this._file = file;
+        this.file = file;
     }
 
     public name: string;
     public url: string | null;
+    public file: File;
     private _coords: GPSCoords;
-    private _file: File;
 
     public getCoords() : Promise<GPSCoords> {
 

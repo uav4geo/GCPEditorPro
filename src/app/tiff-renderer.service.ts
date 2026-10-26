@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
 
-// Browsers cannot display TIFF files (in particular 16/32 bit multispectral ones),
-// so we decode them client side (see assets/tiff-worker.js) and convert them to
-// a full resolution JPEG. Pixel coordinates are preserved 1:1.
-
 const WORKER_URL = 'assets/tiff-worker.js';
 const GEOTIFF_URL = 'geotiff/geotiff.js';
 
@@ -28,7 +24,6 @@ export class TiffRendererService {
     private nextId = 0;
     private pending: { [id: number]: { resolve: (res: DecodedTiff) => void, reject: (err: any) => void } } = {};
 
-    // Decode one image at a time to keep memory usage in check
     private queue: Promise<any> = Promise.resolve();
 
     public render(file: File): Promise<string> {
@@ -40,7 +35,6 @@ export class TiffRendererService {
     private decode(file: File): Promise<DecodedTiff> {
         if (this.useWorker) {
             return this.decodeInWorker(file).catch(err => {
-                // Workers might not be allowed (e.g. file:// origins), fallback to the main thread
                 if (err && err.workerFailed) {
                     console.warn('TIFF worker unavailable, decoding on main thread');
                     this.useWorker = false;
@@ -108,7 +102,6 @@ export class TiffRendererService {
 
         return new Promise((resolve, reject) => {
             canvas.toBlob(blob => {
-                // Release the canvas memory right away
                 canvas.width = canvas.height = 0;
                 if (blob) resolve((window.URL ? URL : webkitURL).createObjectURL(blob));
                 else reject(new Error('Cannot encode image (too large?)'));

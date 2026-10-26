@@ -6,7 +6,6 @@ import exifr from 'exifr';
 import { GPSCoords } from '../shared/common';
 import { TiffRendererService, isTiff } from './tiff-renderer.service';
 
-// Max number of converted (TIFF) images kept in memory
 const DISPLAY_CACHE_SIZE = 30;
 
 @Injectable({
@@ -21,7 +20,6 @@ export class StorageService {
     public license: LicenseInfo;
     public prevNames: object = {};
 
-    // Converted images for files that the browser cannot display (TIFFs), most recently used last
     private displayCache: { name: string, url: Promise<string> }[] = [];
 
     public saveImage(image: ImageInfo): ImageInfo {
@@ -61,7 +59,6 @@ export class StorageService {
         }
     }
 
-    // URL of an image that the browser can display (TIFFs are converted on demand)
     public getDisplayUrl(name: string): Promise<string> {
         const image = this.images.find(item => item.name === name);
         if (!image) return Promise.resolve(null);
@@ -86,6 +83,12 @@ export class StorageService {
         return entry.url;
     }
 
+    public hasDisplayUrl(name: string): boolean {
+        const image = this.images.find(item => item.name === name);
+        if (!image) return false;
+        return !isTiff(image.file) || !!this.displayCache.find(item => item.name === name);
+    }
+
     private evictDisplayUrl(name: string) {
         const entry = this.displayCache.find(item => item.name === name);
         if (!entry) return;
@@ -100,6 +103,10 @@ export class StorageService {
     public getLicense(): LicenseInfo {
         // return new DevLicense(); 
         
+        if (!this.license && allowedIframe()) {
+            this.license = new DevLicense();
+        }
+
         if (!this.license) {
             const licstr = localStorage.getItem("license") || "";
             this.license = validate('gcpeditorpro', licstr);
@@ -120,6 +127,17 @@ export class StorageService {
     }
 
     constructor(private tiffRenderer: TiffRendererService) { }
+}
+
+function allowedIframe(): boolean {
+    try {
+        if (window.self === window.top) return false;
+        const ao = (location as any).ancestorOrigins;
+        const origin = ao && ao.length ? ao[ao.length - 1] : (document.referrer ? new URL(document.referrer).origin : '');
+        return origin === 'https://webodm.net' || origin === 'https://www.webodm.net';
+    } catch (e) {
+        return false;
+    }
 }
 
 class ImageInfo {

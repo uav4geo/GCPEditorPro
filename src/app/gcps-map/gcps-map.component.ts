@@ -202,25 +202,26 @@ export class GcpsMapComponent implements OnInit {
           tileProps.maxNativeZoom = tileProps.maxZoom;
           tileProps.maxZoom = tileProps.maxZoom + 99;
           const layer = L.tileLayer(url, tileProps);
-
-          if (idx === 0) {
-            layer.addTo(map);
-          }
-
           basemaps[props.label] = layer;
         });
 
+        let selectedBasemap = localStorage.getItem("basemap");
+        const savedCustomUrl = localStorage.getItem("customBasemapUrl");
+        let skipCustomPrompt = selectedBasemap === "Custom" && !!savedCustomUrl;
+
         const customLayer = L.layerGroup();
         customLayer.on("add", a => {
-          let url = window.prompt(`Enter a tile URL template. Valid tokens are:
+          let url = skipCustomPrompt ? savedCustomUrl : window.prompt(`Enter a tile URL template. Valid tokens are:
 {z}, {x}, {y} for Z/X/Y tile scheme
 {-y} for flipped TMS-style Y coordinates
 
 Example:
 https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
-`, 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png');
+`, savedCustomUrl || 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png');
+          skipCustomPrompt = false;
         
         if (url){
+          localStorage.setItem("customBasemapUrl", url);
           customLayer.clearLayers();
           const l = L.tileLayer(url, {
                 maxNativeZoom: 24,
@@ -233,13 +234,16 @@ https://a.tile.openstreetmap.org/{z}/{x}/{y}.png
         });
         basemaps["Custom"] = customLayer;
         basemaps["None"] = L.layerGroup();
-        
 
         new Autolayers({
             overlays: {},
             selectedOverlays: [],
             baseLayers: basemaps
           }).addTo(map);
+
+        if (!basemaps[selectedBasemap]) selectedBasemap = Basemaps[0].label;
+        basemaps[selectedBasemap].addTo(map);
+        map.on("baselayerchange", (e: any) => localStorage.setItem("basemap", e.name));
 
         // Add markers control
         new SimpleMarkers({

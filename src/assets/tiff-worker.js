@@ -1,16 +1,9 @@
-// Decodes TIFF files (8/16/32 bit, integer or float, any number of bands)
-// into 8-bit RGBA pixels that can be displayed by the browser.
-// Runs as a Web Worker, but can also be loaded with a <script> tag
-// (after geotiff.js) as a fallback, in which case it exposes renderTiff().
-
 var isWorker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
 if (isWorker) importScripts('../geotiff/geotiff.js');
 
-// Percentiles used for the contrast stretch of high bit depth images
 var LOW_PERCENTILE = 0.02;
 var HIGH_PERCENTILE = 0.98;
 
-// Max number of pixels sampled to compute the percentiles of each band
 var MAX_SAMPLES = 500000;
 
 function isPlain8Bit(image) {
@@ -24,7 +17,6 @@ function isPlain8Bit(image) {
     var spp = image.getSamplesPerPixel();
     var extra = fd.ExtraSamples ? fd.ExtraSamples.length : 0;
 
-    // Grayscale, RGB(A), palette, CMYK, YCbCr: let geotiff handle the conversion
     return (ph === 0 || ph === 1) ? spp - extra === 1 :
         (ph === 2 || ph === 3 || ph === 5 || ph === 6);
 }
@@ -90,7 +82,6 @@ function renderTiff(file) {
                 var lo = range[0];
                 var scale = 255 / (range[1] - range[0]);
                 for (var i = 0; i < size; i++) {
-                    // Uint8ClampedArray clamps out of range values; NaN becomes 0
                     rgba[i * 4 + c] = (band[i] - lo) * scale;
                 }
             }

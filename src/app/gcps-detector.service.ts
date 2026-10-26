@@ -48,7 +48,6 @@ export class GcpsDetectorService {
             this.areClassifiersLoaded = true;
         }
 
-        // TIFFs need to be converted before they can be loaded in an <img>
         const url = await this.storage.getDisplayUrl(imgName);
 
         return new Promise<CoordsXY>((resolve, reject) => {

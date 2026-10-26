@@ -258,13 +258,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.loadVisibleImages();
     }
 
-    // Resolve the display URLs of the images in the current page
-    // (TIFFs are converted on demand, which can take a while)
     private loadVisibleImages() {
         const visible = this.images.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
 
         for (const desc of visible) {
             if (desc.imageUrl === null) continue;
+
+            if (!this.storage.hasDisplayUrl(desc.image.imgName)) {
+                desc.displayUrl = desc.displayUrlRaw = desc.displayError = null;
+            }
 
             this.storage.getDisplayUrl(desc.image.imgName).then(url => {
                 if (url !== null && url !== desc.displayUrlRaw) {
@@ -410,6 +412,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         desc.isTagged = true;
         desc.image.imX = location.x;
         desc.image.imY = location.y;
+        desc.pinLocation = location;
     }
 
     public unpin(desc: ImageDescriptor): void{

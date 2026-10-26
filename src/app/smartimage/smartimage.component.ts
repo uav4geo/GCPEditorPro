@@ -48,7 +48,7 @@ export class SmartimageComponent implements OnInit, AfterViewInit {
     ngAfterViewInit(): void {
         this.panzoom = Panzoom.default(this.img.nativeElement, {
             maxScale: 300,
-            cursor: 'default',
+            cursor: 'crosshair',
             animate: false,
             canvas: true,
             step: 0.7,

@@ -128,6 +128,9 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
                 return;
             }
             e.preventDefault();
+            clearTimeout(this.wheelMessageTimeout);
+            this.msgDiv.nativeElement.style.transitionDuration = '0s';
+            this.msgDiv.nativeElement.style.opacity = 0;
             if (this.naturalWidth === 0) return;
 
             const delta = e.deltaY || e.deltaX;
@@ -252,6 +255,7 @@ export class SmartimageComponent implements AfterViewInit, OnDestroy {
 
     private displayWheelMessage() {
         clearTimeout(this.wheelMessageTimeout);
+        this.msgDiv.nativeElement.style.transitionDuration = '';
         this.msgDiv.nativeElement.style.opacity = 1;
         this.wheelMessageTimeout = setTimeout(() => {
             this.msgDiv.nativeElement.style.opacity = 0;

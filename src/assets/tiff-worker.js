@@ -1,5 +1,4 @@
-var isWorker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
-if (isWorker) importScripts('../geotiff/geotiff.js');
+importScripts('../geotiff/geotiff.js');
 
 var LOW_PERCENTILE = 0.02;
 var HIGH_PERCENTILE = 0.98;
@@ -91,16 +90,12 @@ function renderTiff(file) {
     });
 }
 
-if (isWorker) {
-    self.onmessage = function (e) {
-        var id = e.data.id;
-        renderTiff(e.data.file).then(function (res) {
-            res.id = id;
-            self.postMessage(res, [res.data]);
-        }, function (err) {
-            self.postMessage({ id: id, error: (err && err.message) || String(err) });
-        });
-    };
-} else {
-    self.renderTiff = renderTiff;
-}
+self.onmessage = function (e) {
+    var id = e.data.id;
+    renderTiff(e.data.file).then(function (res) {
+        res.id = id;
+        self.postMessage(res, [res.data]);
+    }, function (err) {
+        self.postMessage({ id: id, error: (err && err.message) || String(err) });
+    });
+};

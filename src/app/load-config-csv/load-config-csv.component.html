@@ -14,7 +14,7 @@
                 </div>
                 <div class="col col-md-4">
                     <div class="input-group" placement="bottom" ngbTooltip='Specify the coordinate reference system of your CSV using an EPSG code or a PROJ string.'>
-                        <input type="text" [(ngModel)]="epsgProj4" class="form-control"
+                        <input type="text" [(ngModel)]="epsgProj4" class="form-control" [class.is-invalid]="epsgInvalid"
                             (input)="epsgProj4change($event.target.value)" (keyup.enter)="next()" id="inlineFormInputGroup"
                             placeholder="EPSG:4326">
                         <div class="input-group-append" data-toggle="tooltip">
@@ -118,6 +118,8 @@
 
 <div class="fixed-bottom bg-white d-flex align-items-center justify-content-end">
     <app-license-info></app-license-info>
-    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">Go to next step<fa-icon
-            icon="long-arrow-alt-right" class="ml-2"></fa-icon></button>
+    <button class="btn btn-primary mr-3 my-3" [disabled]="!isReady" (click)="next()">
+        <ng-container *ngIf="!epsgWarning">Go to next step<fa-icon icon="long-arrow-alt-right" class="ml-2"></fa-icon></ng-container>
+        <ng-container *ngIf="epsgWarning">Check your EPSG code<fa-icon icon="exclamation-triangle" class="ml-2"></fa-icon></ng-container>
+    </button>
 </div>

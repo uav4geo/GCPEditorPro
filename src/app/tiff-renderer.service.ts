@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 
 const WORKER_URL = 'assets/tiff-worker.js';
-const GEOTIFF_URL = 'geotiff/geotiff.js';
 
 interface DecodedTiff {
     width: number;
@@ -19,8 +18,6 @@ export function isTiff(file: File): boolean {
 export class TiffRendererService {
 
     private worker: Worker = null;
-    private useWorker = typeof Worker !== 'undefined';
-    private fallbackLoaded: Promise<void> = null;
     private nextId = 0;
     private pending: { [id: number]: { resolve: (res: DecodedTiff) => void, reject: (err: any) => void } } = {};
 
@@ -33,27 +30,8 @@ export class TiffRendererService {
     }
 
     private decode(file: File): Promise<DecodedTiff> {
-        if (this.useWorker) {
-            return this.decodeInWorker(file).catch(err => {
-                if (err && err.workerFailed) {
-                    console.warn('TIFF worker unavailable, decoding on main thread');
-                    this.useWorker = false;
-                    return this.decodeInMainThread(file);
-                }
-                throw err;
-            });
-        } else {
-            return this.decodeInMainThread(file);
-        }
-    }
-
-    private decodeInWorker(file: File): Promise<DecodedTiff> {
         if (this.worker === null) {
-            try {
-                this.worker = new Worker(WORKER_URL);
-            } catch (e) {
-                return Promise.reject({ workerFailed: true });
-            }
+            this.worker = new Worker(WORKER_URL);
 
             this.worker.onmessage = (e: MessageEvent) => {
                 const p = this.pending[e.data.id];
@@ -63,7 +41,7 @@ export class TiffRendererService {
                 else p.resolve(e.data);
             };
             this.worker.onerror = () => {
-                Object.keys(this.pending).forEach(id => this.pending[id].reject({ workerFailed: true }));
+                Object.keys(this.pending).forEach(id => this.pending[id].reject(new Error('TIFF decoder failed')));
                 this.pending = {};
                 this.worker.terminate();
                 this.worker = null;
@@ -74,23 +52,6 @@ export class TiffRendererService {
             const id = this.nextId++;
             this.pending[id] = { resolve, reject };
             this.worker.postMessage({ id, file });
-        });
-    }
-
-    private decodeInMainThread(file: File): Promise<DecodedTiff> {
-        if (this.fallbackLoaded === null) {
-            this.fallbackLoaded = this.loadScript(GEOTIFF_URL).then(() => this.loadScript(WORKER_URL));
-        }
-        return this.fallbackLoaded.then(() => (window as any).renderTiff(file));
-    }
-
-    private loadScript(url: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = url;
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error('Cannot load ' + url));
-            document.head.appendChild(script);
         });
     }
 

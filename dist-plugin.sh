@@ -2,7 +2,7 @@
 
 yarn
 rm -fr dist
-npm run electron-build
+npm run plugin-build
 
 cd dist
 

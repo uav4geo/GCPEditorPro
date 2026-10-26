@@ -27,6 +27,9 @@ export class LoadConfigCsvComponent implements OnInit {
     public csvHeader: string[] = ["GCP Label", "X", "Y", "Z"];
     public epsgProj4: string;
     public isReady = false;
+    public epsgInvalid = false;
+    public epsgWarning = false;
+    private epsgWarningTimeout: any;
     public csvParseResult: CsvParseResult = null;
 
     private handleDrop = null;
@@ -88,7 +91,7 @@ export class LoadConfigCsvComponent implements OnInit {
                     this.csvFileName = file.name;
 
                     this.csvParseResult = res;
-                    this.isReady = res.descriptor.projection != null;
+                    this.isReady = true;
 
 
                 }
@@ -102,16 +105,19 @@ export class LoadConfigCsvComponent implements OnInit {
     }
 
     epsgProj4change(e): void {
-        if (this.csvParseResult != null) {
-            this.csvParseResult.descriptor.projection = this.utilsService.getProjection(this.epsgProj4);
-            this.isReady = this.csvParseResult.descriptor.projection != null;
-        }else{
-            this.isReady = false;
-        }
+        this.epsgInvalid = false;
     }
 
     next(): void {
         if (!this.isReady) return;
+
+        const projection = this.utilsService.getProjection(this.epsgProj4);
+        this.epsgInvalid = projection == null;
+        if (this.epsgInvalid) {
+            this.showEpsgWarning();
+            return;
+        }
+        this.csvParseResult.descriptor.projection = projection;
 
         this.storageService.gcps = this.csvParseResult.descriptor.gcps;
         this.storageService.projection = this.csvParseResult.descriptor.projection;
@@ -121,7 +127,14 @@ export class LoadConfigCsvComponent implements OnInit {
         this.router.navigateByUrl('/gcps-map');
     }
 
+    private showEpsgWarning(): void {
+        clearTimeout(this.epsgWarningTimeout);
+        this.epsgWarning = true;
+        this.epsgWarningTimeout = setTimeout(() => this.epsgWarning = false, 2000);
+    }
+
     ngOnDestroy(): void {
+        clearTimeout(this.epsgWarningTimeout);
         if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
     }
 

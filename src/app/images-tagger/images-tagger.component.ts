@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef, ViewChildren, QueryList, NgZone } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
@@ -36,6 +36,13 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public showFilterSettings: boolean = false;
 
+    public columns: number = 4;
+    public showColumnsSettings: boolean = false;
+    public imageSize: number = 320;
+
+    @ViewChild('grid') grid: ElementRef;
+    private gridObserver = null;
+
     public images: ImageDescriptor[] = [];
     public rawImages: ImageDescriptor[] = [];
 
@@ -56,7 +63,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         private sanitizer: DomSanitizer,
         private appRef: ApplicationRef,
         private modalService: NgbModal,
-        private detector: GcpsDetectorService) {
+        private detector: GcpsDetectorService,
+        private zone: NgZone) {
 
         if (typeof storage.gcps === 'undefined' ||
             storage.gcps === null ||
@@ -71,11 +79,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.filterDistance = localStorage.getItem("filterDistance") !== null ? 
                                 (parseFloat(localStorage.getItem("filterDistance")) || 30) : 
                                 30;
+
+        const columns = parseInt(localStorage.getItem("columns"));
+        if (columns >= 1 && columns <= 6) this.columns = columns;
     }
 
     ngOnDestroy(): void {
         if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
         window.removeEventListener("click", this.closeFilterSettings.bind(this));
+        if (this.gridObserver) this.gridObserver.disconnect();
     }
 
     ngAfterViewInit(): void {
@@ -85,6 +97,18 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         };
         window.addEventListener("droppedFiles", this.handleDrop);
         window.addEventListener("click", this.closeFilterSettings.bind(this));
+        if (this.grid) {
+            this.gridObserver = new (window as any).ResizeObserver(() => this.zone.run(() => this.updateImageSize()));
+            this.gridObserver.observe(this.grid.nativeElement);
+        }
+    }
+
+    public updateImageSize(){
+        if (!this.grid) return;
+        const el = this.grid.nativeElement;
+        const style = getComputedStyle(el);
+        const width = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        this.imageSize = Math.max(1, Math.floor(width / this.columns) - 2);
     }
 
 
@@ -218,6 +242,18 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public closeFilterSettings(){
         this.showFilterSettings = false;
+        this.showColumnsSettings = false;
+    }
+
+    public toggleColumnsSettings(){
+        this.showColumnsSettings = !this.showColumnsSettings;
+    }
+
+    public setColumns(n: number){
+        this.columns = n;
+        this.showColumnsSettings = false;
+        localStorage.setItem("columns", n.toString());
+        this.updateImageSize();
     }
 
     public filterImages() {
@@ -298,6 +334,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public handleImages(files: File[]) {
 
+        files = Array.from(files).filter(f => /\.(jpe?g|png|tiff?|webp|bmp|gif)$/i.test(f.name));
         if (files.length == 0) return;
 
         var newImages = [];

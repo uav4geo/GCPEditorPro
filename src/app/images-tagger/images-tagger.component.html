@@ -17,7 +17,7 @@
                 <button title='Show only images that are within {{filterDistance}} meters of GCP "{{gcp.name}}"' class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterByDistance()">
                     <fa-icon *ngIf="filterByDistance" icon="toggle-on" class="mr-2"></fa-icon>
                     <fa-icon *ngIf="!filterByDistance" icon="toggle-off" class="mr-2"></fa-icon>
-                    Filter By Distance
+                    Distance Filter
                 </button>
             </div>
             <div class="input-group-append">
@@ -25,6 +25,18 @@
                     <fa-icon *ngIf="!showFilterSettings" icon="caret-down"></fa-icon>
                     <fa-icon *ngIf="showFilterSettings" icon="caret-up"></fa-icon>
                 </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-auto" (click)="$event.stopPropagation()">
+        <div class="columns">
+            <button title="Number of images displayed in each row" class="btn btn-light" type="button" (click)="toggleColumnsSettings()">
+                <fa-icon icon="th" class="mr-2"></fa-icon> {{columns}}
+                <fa-icon *ngIf="!showColumnsSettings" icon="caret-down" class="ml-2"></fa-icon>
+                <fa-icon *ngIf="showColumnsSettings" icon="caret-up" class="ml-2"></fa-icon>
+            </button>
+            <div class="columns-settings btn-group" *ngIf="showColumnsSettings">
+                <button *ngFor="let n of [1, 2, 3, 4, 5, 6]" type="button" class="btn btn-sm" [ngClass]="{'btn-primary': n === columns, 'btn-light': n !== columns}" (click)="setColumns(n)">{{n}}</button>
             </div>
         </div>
     </div>
@@ -36,8 +48,8 @@
     </div>
 </div>
 <div class="row mt-2">
-    <div class="col" *ngIf="images !== null">
-        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border dyn-w">
+    <div class="col" #grid *ngIf="images !== null">
+        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border" [style.width.%]="100 / columns">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
                 <h5 class="m-1 title">{{getName(desc)}}
                     <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="filterByDistance && desc.distance == null" title="This image has no EXIF location data">
@@ -55,7 +67,7 @@
                     </div>
                 </a>
             </span>
-            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation"
+            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation" [size]="imageSize"
                 (pin)="pin($event, desc)" style="display: block; overflow: hidden">
             </app-smartimage>
             <div *ngIf="desc.imageUrl !== null && !desc.displayUrl" class="p-5 text-muted">

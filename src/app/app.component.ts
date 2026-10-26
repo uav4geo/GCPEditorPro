@@ -53,8 +53,39 @@ export class AppComponent implements AfterViewInit {
             }, false);
         })
     
+        const readEntry = (entry): Promise<File[]> => {
+            if (entry.isFile) {
+                return new Promise(resolve => entry.file(f => resolve([f]), () => resolve([])));
+            }
+            if (!entry.isDirectory) return Promise.resolve([]);
+
+            const reader = entry.createReader();
+            const entries = [];
+            return new Promise<File[]>(resolve => {
+                const readBatch = () => reader.readEntries(batch => {
+                    if (batch.length === 0) {
+                        Promise.all(entries.map(readEntry)).then(lists => resolve([].concat(...lists)));
+                    } else {
+                        entries.push(...batch);
+                        readBatch();
+                    }
+                }, () => resolve([]));
+                readBatch();
+            });
+        };
+
         const handleDrop = e => {
-            window.dispatchEvent(new CustomEvent('droppedFiles', {detail: {files: e.dataTransfer.files}}));
+            const items = e.dataTransfer.items;
+            const entries = items ? Array.from(items).map((item: any) => item.webkitGetAsEntry && item.webkitGetAsEntry()) : [];
+
+            if (entries.length === 0 || entries.some(entry => !entry)) {
+                window.dispatchEvent(new CustomEvent('droppedFiles', {detail: {files: e.dataTransfer.files}}));
+                return;
+            }
+
+            Promise.all(entries.map(readEntry)).then(lists => {
+                window.dispatchEvent(new CustomEvent('droppedFiles', {detail: {files: [].concat(...lists)}}));
+            });
         };
         dropArea.addEventListener('drop', handleDrop, false);
 

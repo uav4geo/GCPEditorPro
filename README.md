@@ -48,6 +48,12 @@ npm install
 ng serve
 ```
 
+If `ng` is not found, run it directly from `node_modules`:
+
+```bash
+./node_modules/@angular/cli/bin/ng serve
+```
+
 After a while, the application should be available from your browser at http://localhost:4200.
 
 You can build the WebODM plugin by running:

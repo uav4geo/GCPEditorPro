@@ -1,7 +1,5 @@
 .smart-image{
     position: relative;
-    max-width: 320px;
-    max-height: 320px;
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
     scrollbar-width: none;  /* Firefox */
 }
@@ -9,10 +7,20 @@
     display: none; /* Safari / Chrome */
 }
 
-.img-fluid{
-    image-rendering: pixelated;
-    max-width: 320px; 
-    max-height: 320px;
+.source{
+    display: none;
+}
+
+svg{
+    display: inline-block;
+    vertical-align: top;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+}
+
+svg.panning{
+    cursor: move;
 }
 
 .gm-style-pbc {

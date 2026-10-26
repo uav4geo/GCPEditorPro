@@ -17,20 +17,27 @@ export class LoadConfigEmptyComponent implements OnInit {
     }
 
     public epsgProj4: string;
-    public isReady = true;
+    public epsgInvalid = false;
+    public epsgWarning = false;
+    private epsgWarningTimeout: any;
     public projection: Projection;
 
     epsgProj4change(e): void {
-        this.projection = this.utilsService.getProjection(this.epsgProj4);
-        this.isReady = this.projection != null;
+        this.epsgInvalid = false;
     }
 
     next(): void {
-        if (!this.isReady) return;
+        this.projection = this.utilsService.getProjection(this.epsgProj4);
+        this.epsgInvalid = this.projection == null;
+        if (this.epsgInvalid) {
+            this.showEpsgWarning();
+            return;
+        }
 
         const go = () => {
             this.storageService.gcps = [];
-            this.storageService.projection = this.projection || this.utilsService.getProjection("EPSG:4326");
+            this.storageService.mapView = null;
+            this.storageService.projection = this.projection;
             this.storageService.imageGcps = [];
             this.storageService.prevNames = {};
             this.router.navigateByUrl('/gcps-map');
@@ -45,13 +52,21 @@ export class LoadConfigEmptyComponent implements OnInit {
         }
     }
 
+    private showEpsgWarning(): void {
+        clearTimeout(this.epsgWarningTimeout);
+        this.epsgWarning = true;
+        this.epsgWarningTimeout = setTimeout(() => this.epsgWarning = false, 2000);
+    }
+
+    ngOnDestroy(): void {
+        clearTimeout(this.epsgWarningTimeout);
+    }
+
     ngOnInit(): void {
         if (this.storageService.projection == null) {
             this.projection = this.utilsService.getProjection("EPSG:4326");
         }else{
             this.epsgProj4 = this.storageService.projection.str;
         }
-        
-        this.isReady = true;
     }
 }

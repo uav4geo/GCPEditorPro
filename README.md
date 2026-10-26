@@ -15,7 +15,7 @@ Amazingly Fast and Simple Ground Control Points Interface for [WebODM](https://w
 - Geocoder
 - Import existing GCP Files
 - Offline capable
-- Cross platform (Windows, Mac, Linux, Web)
+- Cross platform (runs in any modern browser)
 - WebODM Integration (Plugin)
 
 ## Installation
@@ -50,14 +50,10 @@ ng serve
 
 After a while, the application should be available from your browser at http://localhost:4200.
 
-You can build the electron apps and the WebODM plugin by running:
+You can build the WebODM plugin by running:
 
 ```bash
-# Windows
-dist.bat
-
-# Linux/Mac
-./dist.sh
+./dist-plugin.sh
 ```
 
 Results will be stored in the `dist/` folder.

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ApplicationRef, TemplateRef, ViewChildren, QueryList, NgZone } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from '../storage.service';
 import { ImageGcp, GCP } from '../gcps-utils.service';
@@ -36,6 +36,14 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public showFilterSettings: boolean = false;
 
+    public columns: number = 4;
+    public showColumnsSettings: boolean = false;
+    public imageSize: number = 320;
+    public showCrosshair: boolean = localStorage.getItem("crosshair") !== "0";
+
+    @ViewChild('grid') grid: ElementRef;
+    private gridObserver = null;
+
     public images: ImageDescriptor[] = [];
     public rawImages: ImageDescriptor[] = [];
 
@@ -46,6 +54,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     @ViewChild('dnd') dnd: ElementRef;
     private handleDrop = null;
+    private handleWindowClick = () => this.closeFilterSettings();
 
     @ViewChild('imagesUpload') imagesUpload: ElementRef;
     @ViewChildren('smartImage') smartImages:QueryList<SmartimageComponent>;
@@ -56,7 +65,8 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         private sanitizer: DomSanitizer,
         private appRef: ApplicationRef,
         private modalService: NgbModal,
-        private detector: GcpsDetectorService) {
+        private detector: GcpsDetectorService,
+        private zone: NgZone) {
 
         if (typeof storage.gcps === 'undefined' ||
             storage.gcps === null ||
@@ -71,11 +81,15 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         this.filterDistance = localStorage.getItem("filterDistance") !== null ? 
                                 (parseFloat(localStorage.getItem("filterDistance")) || 30) : 
                                 30;
+
+        const columns = parseInt(localStorage.getItem("columns"));
+        if (columns >= 1 && columns <= 6) this.columns = columns;
     }
 
     ngOnDestroy(): void {
         if (this.handleDrop) window.removeEventListener("droppedFiles", this.handleDrop);
-        window.removeEventListener("click", this.closeFilterSettings.bind(this));
+        window.removeEventListener("click", this.handleWindowClick);
+        if (this.gridObserver) this.gridObserver.disconnect();
     }
 
     ngAfterViewInit(): void {
@@ -84,7 +98,19 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.handleImages(e.detail.files);
         };
         window.addEventListener("droppedFiles", this.handleDrop);
-        window.addEventListener("click", this.closeFilterSettings.bind(this));
+        window.addEventListener("click", this.handleWindowClick);
+        if (this.grid) {
+            this.gridObserver = new (window as any).ResizeObserver(() => this.zone.run(() => this.updateImageSize()));
+            this.gridObserver.observe(this.grid.nativeElement);
+        }
+    }
+
+    public updateImageSize(){
+        if (!this.grid) return;
+        const el = this.grid.nativeElement;
+        const style = getComputedStyle(el);
+        const width = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        this.imageSize = Math.max(1, Math.floor(width / this.columns) - 2);
     }
 
 
@@ -152,7 +178,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
                     coords: coord,
-                    distance: null
+                    distance: null,
+                    displayUrl: null,
+                    displayUrlRaw: null,
+                    displayError: null
                 };
             } else {
                 obj = {
@@ -171,7 +200,10 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     imageUrl: this.storage.getImageUrl(img.name) !== null ? this.sanitizer.bypassSecurityTrustResourceUrl(this.storage.getImageUrl(img.name)) : null,
                     otherGcps: gcps.map(gcp => gcp.gcpName),
                     coords: coord,
-                    distance: null
+                    distance: null,
+                    displayUrl: null,
+                    displayUrlRaw: null,
+                    displayError: null
                 };
             }
 
@@ -212,6 +244,23 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public closeFilterSettings(){
         this.showFilterSettings = false;
+        this.showColumnsSettings = false;
+    }
+
+    public toggleCrosshair(){
+        this.showCrosshair = !this.showCrosshair;
+        localStorage.setItem("crosshair", this.showCrosshair ? "1" : "0");
+    }
+
+    public toggleColumnsSettings(){
+        this.showColumnsSettings = !this.showColumnsSettings;
+    }
+
+    public setColumns(n: number){
+        this.columns = n;
+        this.showColumnsSettings = false;
+        localStorage.setItem("columns", n.toString());
+        this.updateImageSize();
     }
 
     public filterImages() {
@@ -243,6 +292,35 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         if (this.filterByDistance){
             localStorage.setItem("filterDistance", this.filterDistance.toString());
         }
+
+        this.loadVisibleImages();
+    }
+
+    public pageChanged(page: number) {
+        this.page = page;
+        this.loadVisibleImages();
+    }
+
+    private loadVisibleImages() {
+        const visible = this.images.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+
+        for (const desc of visible) {
+            if (desc.imageUrl === null) continue;
+
+            if (!this.storage.hasDisplayUrl(desc.image.imgName)) {
+                desc.displayUrl = desc.displayUrlRaw = desc.displayError = null;
+            }
+
+            this.storage.getDisplayUrl(desc.image.imgName).then(url => {
+                if (url !== null && url !== desc.displayUrlRaw) {
+                    desc.displayUrlRaw = url;
+                    desc.displayUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+                    desc.displayError = null;
+                }
+            }, err => {
+                desc.displayError = "Cannot display image: " + (err && err.message ? err.message : err);
+            });
+        }
     }
 
     public toggleFilterSettings(){
@@ -263,6 +341,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
     public handleImages(files: File[]) {
 
+        files = Array.from(files).filter(f => /\.(jpe?g|png|tiff?|webp|bmp|gif)$/i.test(f.name));
         if (files.length == 0) return;
 
         var newImages = [];
@@ -303,13 +382,17 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                     imageUrl: imageUrl,
                     otherGcps: [],
                     coords: coord,
-                    distance: null
+                    distance: null,
+                    displayUrl: null,
+                    displayUrlRaw: null,
+                    displayError: null
                 };
 
                 newImages.push(descr);
                 // Otherwise we add the loaded data to the array
             } else {
                 res[0].imageUrl = imageUrl;
+                res[0].displayUrl = res[0].displayUrlRaw = res[0].displayError = null;
             }
 
         }
@@ -373,6 +456,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         desc.isTagged = true;
         desc.image.imX = location.x;
         desc.image.imY = location.y;
+        desc.pinLocation = location;
     }
 
     public unpin(desc: ImageDescriptor): void{
@@ -380,7 +464,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
         desc.image.imX = desc.image.imY = 0;
         desc.pinLocation = null;
         
-        const si = this.smartImages.find(si => si.src === desc.imageUrl);
+        const si = this.smartImages.find(si => si.src === desc.displayUrl);
         if (si) si.clearPin();
     }
 
@@ -390,6 +474,7 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
             this.images = this.images.filter(item => item.image.imgName !== desc.image.imgName);
             this.rawImages = this.rawImages.filter(item => item.image.imgName !== desc.image.imgName);
             this.storage.removeImage(desc.image.imgName);
+            this.loadVisibleImages();
 
             // Notify smart images that pins might have to be refreshed
             window.dispatchEvent(new CustomEvent('smartImagesLayoutChanged'));
@@ -472,12 +557,14 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
 
         this.setProgress("Detecting GCPs in images", 0, false, true);
 
-        for (let i = 0; i < this.images.length; i++) {
+        const images = this.images.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
 
-            let item = this.images[i];
+        for (let i = 0; i < images.length; i++) {
+
+            let item = images[i];
             if (item.isTagged) continue;
 
-            let progress = i / this.images.length;
+            let progress = i / images.length;
 
             if (this.requestedInterrupt) {
                 console.warn("Received interrupt signal");
@@ -486,8 +573,13 @@ export class ImagesTaggerComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            this.setProgress("Detecting GCP in " + item.image.imgName + " (" + (i + 1) + "/" + this.images.length + ")", progress, false, true);
-            const coords = await this.detector.detect(item.image.imgName);
+            this.setProgress("Detecting GCP in " + item.image.imgName + " (" + (i + 1) + "/" + images.length + ")", progress, false, true);
+            let coords = null;
+            try {
+                coords = await this.detector.detect(item.image.imgName);
+            } catch (e) {
+                console.warn(e);
+            }
 
             if (coords != null) {
 
@@ -541,6 +633,9 @@ class ImageDescriptor {
     public isTagged: boolean;
     public pinLocation: CoordsXY;
     public imageUrl: SafeResourceUrl;
+    public displayUrl: SafeResourceUrl;
+    public displayUrlRaw: string;
+    public displayError: string;
     public otherGcps: string[];
     public coords: Promise<GPSCoords>;
     public distance: number;

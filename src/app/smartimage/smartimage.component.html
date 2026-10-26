@@ -1,9 +1,19 @@
 <div class="smart-image">
-    <div #panzoom>
-        <img [src]="src" #img class="img-fluid">
-    </div>
-    <img src="./assets/crosshair.png" width="32" height="32" style="position: absolute; pointer-events: none;" #pin>
-    <div class="msg gm-style-pbc" #msg> 
+    <img [src]="src" #img class="source" (load)="onImageLoad()">
+    <svg #svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <image #image x="0" y="0"></image>
+        <g #cross style="display: none" pointer-events="none" fill="none">
+            <path stroke="#000" stroke-opacity="0.6" stroke-width="3" vector-effect="non-scaling-stroke"></path>
+            <path stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+        </g>
+        <g #pin style="display: none">
+            <circle r="14" fill="none" stroke="#000" stroke-opacity="0.85" stroke-width="3"></circle>
+            <path d="M-12 0H-3M3 0H12M0 -12V-3M0 3V12" stroke="#000" stroke-opacity="0.6" stroke-width="3"></path>
+            <path d="M-12 0H-3M3 0H12M0 -12V-3M0 3V12" stroke="#f00" stroke-width="1"></path>
+            <circle r="0.75" fill="#f00"></circle>
+        </g>
+    </svg>
+    <div class="msg gm-style-pbc" #msg>
         <p class="gm-style-pbt">Press SHIFT key + mouse wheel to zoom the image</p>
     </div>
 </div>

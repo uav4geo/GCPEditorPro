@@ -75,24 +75,17 @@ input {
     }
 }
 
-.dyn-w{
-    width: 25% !important;
+.columns{
+    position: relative;
 }
 
-@media (max-width: 1200px) {
-    .dyn-w{
-        width: 33% !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .dyn-w{
-        width: 50% !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .dyn-w{
-        width: 100% !important;
-    }
+.columns-settings{
+    position: absolute;
+    top: 36px;
+    right: 0;
+    z-index: 1;
+    border: 1px solid #dadee3;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: white;
 }

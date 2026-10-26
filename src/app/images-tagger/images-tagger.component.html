@@ -2,7 +2,7 @@
     <div class="col">
         <div class="custom-file">
             <input type="file" class="custom-file-input" #imagesUpload (change)="imagesSelected($event)"
-                accept="image/*" multiple="true" id="imagesFiles">
+                accept="image/*,.tif,.tiff" multiple="true" id="imagesFiles">
             <label class="custom-file-label mb-0" for="imagesFiles">
                 Select some images, then click on GCP "{{gcp.name}}" in each image.
             </label>
@@ -17,7 +17,7 @@
                 <button title='Show only images that are within {{filterDistance}} meters of GCP "{{gcp.name}}"' class="btn" [ngClass]="{'btn-primary': filterByDistance, 'btn-light': !filterByDistance}" type="button" (click)="toggleFilterByDistance()">
                     <fa-icon *ngIf="filterByDistance" icon="toggle-on" class="mr-2"></fa-icon>
                     <fa-icon *ngIf="!filterByDistance" icon="toggle-off" class="mr-2"></fa-icon>
-                    Filter By Distance
+                    Distance Filter
                 </button>
             </div>
             <div class="input-group-append">
@@ -29,6 +29,23 @@
         </div>
     </div>
     <div class="col-md-auto">
+        <button title="Toggle crosshair" class="btn" [ngClass]="{'btn-primary': showCrosshair, 'btn-light': !showCrosshair}" type="button" (click)="toggleCrosshair()">
+            <fa-icon icon="crosshairs"></fa-icon>
+        </button>
+    </div>
+    <div class="col-md-auto" (click)="$event.stopPropagation()">
+        <div class="columns">
+            <button title="Number of images displayed in each row" class="btn btn-light" type="button" (click)="toggleColumnsSettings()">
+                <fa-icon icon="th" class="mr-2"></fa-icon> {{columns}}
+                <fa-icon *ngIf="!showColumnsSettings" icon="caret-down" class="ml-2"></fa-icon>
+                <fa-icon *ngIf="showColumnsSettings" icon="caret-up" class="ml-2"></fa-icon>
+            </button>
+            <div class="columns-settings btn-group" *ngIf="showColumnsSettings">
+                <button *ngFor="let n of [1, 2, 3, 4, 5, 6]" type="button" class="btn btn-sm" [ngClass]="{'btn-primary': n === columns, 'btn-light': n !== columns}" (click)="setColumns(n)">{{n}}</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-auto">
         <button title="Attempt to detect checkerboard pattern GCPs automatically (experimental)" [disabled]="images === null || images.length === 0 ? true : null" class="btn btn-info" type="button" (click)="detectImages()">
             <fa-icon icon="search-location" class="mr-2"></fa-icon>
             Detect GCPs
@@ -36,8 +53,8 @@
     </div>
 </div>
 <div class="row mt-2">
-    <div class="col" *ngIf="images !== null">
-        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border dyn-w">
+    <div class="col" #grid *ngIf="images !== null">
+        <div *ngFor="let desc of images | slice: (page-1) * pageSize : page * pageSize" class="align-top d-inline-block text-center border" [style.width.%]="100 / columns">
             <span class="badge d-block rounded-0" [ngClass]="getClass(desc)">
                 <h5 class="m-1 title">{{getName(desc)}}
                     <fa-layers [fixedWidth]="true" class="ml-3" *ngIf="filterByDistance && desc.distance == null" title="This image has no EXIF location data">
@@ -55,9 +72,13 @@
                     </div>
                 </a>
             </span>
-            <app-smartimage #smartImage *ngIf="desc.imageUrl !== null" [src]="desc.imageUrl" [pinLocation]="desc.pinLocation"
+            <app-smartimage #smartImage *ngIf="desc.displayUrl" [src]="desc.displayUrl" [pinLocation]="desc.pinLocation" [size]="imageSize" [crosshair]="showCrosshair"
                 (pin)="pin($event, desc)" style="display: block; overflow: hidden">
             </app-smartimage>
+            <div *ngIf="desc.imageUrl !== null && !desc.displayUrl" class="p-5 text-muted">
+                <span *ngIf="!desc.displayError"><fa-icon icon="cog" [spin]="true" class="mr-2"></fa-icon>Loading image...</span>
+                <span *ngIf="desc.displayError" class="text-danger">{{desc.displayError}}</span>
+            </div>
         </div>
         <div class="alert alert-info mt-2" *ngIf="!isLoading && filterByDistance && rawImages.length > 0 && images.length === 0">
             <fa-icon icon="info-circle" class="mr-3"></fa-icon> No images seem to be within {{filterDistance}} meters of GCP "{{gcp.name}}", try turning off the distance filter or increase the distance radius.
@@ -68,7 +89,7 @@
     <button class="btn btn-primary ml-3" (click)="back()">
         <fa-icon icon="long-arrow-alt-left" class="mr-2"></fa-icon>Cancel
     </button>
-    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [(page)]="page" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
+    <ngb-pagination *ngIf="images.length > pageSize" class="d-flex justify-content-center" [collectionSize]="images.length" [page]="page" (pageChange)="pageChanged($event)" [maxSize]="5" [rotate]="true" [boundaryLinks]="true"></ngb-pagination>
     <button class="btn btn-primary mr-3" (click)="ok()">Save Changes
         <fa-icon icon="save" class="ml-2"></fa-icon>
     </button>
